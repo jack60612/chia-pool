@@ -1,0 +1,48 @@
+pool_info:
+  default_res: Minerium pool
+  name: The Minerium Chia Pool
+  logo_url: https://miner/img/pool_logo.svg
+  description: "This Pool allows you to pool."
+welcome_message: "Welcome to Minerium "
+pool_fee: 0.5
+pool_url: https://chia.minerium.com/
+min_difficulty: 1
+default_difficulty: 1
+default_target_address: txch1xly7ugj4u6e0sgjjsj25lrf9a2ejy0ezr659c29jyhwda9plu20qnwu8dt
+pool_fee_address: txch1mdw5usvgjrhx6e8ja396kyfnwy3jyzltnkdytvt8vcky7nl7d6us54s3hj
+wallet_fingerprint: 1718616103
+authentication_token_timeout: 5
+wallet_id: 1
+node_rpc_port: 8555
+wallet_rpc_port: 9256
+rpc_ip_address: 127.0.0.1
+store: MySQLPoolStore
+db_host: 127.0.0.1
+db_port: 3306
+db_user: admin
+db_password: X6ZS3VQ48$ZhW
+db_name: pool
+min_pps_points: 1
+pps_share_price: 1
+partial_time_limit: 25
+partial_confirmation_delay: 300
+scan_start_height: 0
+collect_pool_rewards_interval: 600
+confirmation_security_threshold: 32
+payment_interval: 600
+max_additions_per_transaction: 400
+number_of_partials_target: 300
+time_target: 86400
+relative_lock_height: 32
+logging:
+  log_path: ../logs
+  log_filename: pool-server.log
+  log_level: INFO
+  log_maxfilesrotation: 7
+  log_stdout: true
+server:
+  server_host: 0.0.0.0
+  server_port: 8080
+  server_use_ssl: false
+  server_ssl_crt: config/ssl/domain/domain_srv.crt
+  server_ssl_key: config/ssl/domain/domain_srv.key
