@@ -206,7 +206,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
                             # Save transaction to records in DB
                             try:
                                 await self._store.add_block(rec.launcher_id)
-                                await self._store.add_unspent_block(peak_height, rec.pps_enabled, 1.75)
+                                await self._store.add_unspent_block(int(peak_height), rec.pps_enabled, 1.75)
                                 self._logger.info(f"Successfully added payments to Database")
                             except Exception as e:
                                 self._logger.error(f"Error adding payouts to database: {e}")
