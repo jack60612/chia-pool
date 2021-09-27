@@ -70,7 +70,7 @@ class MySQLPoolStore(AbstractPoolStore):
 
         await cursor.execute(
             "CREATE TABLE IF NOT EXISTS partial(launcher_id VARCHAR(256), "
-            "timestamp bigint PRIMARY KEY, difficulty bigint, "
+            "timestamp bigint, difficulty bigint, "
             "index (timestamp), index (launcher_id))"
         )
 
