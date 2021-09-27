@@ -39,7 +39,7 @@ from .store.abstract import AbstractPoolStore
 from .util import error_response, RequestMetadata, sanic_jsonify
 
 app = Sanic("Pool Server", configure_logging=True)
-app.config.FORWARDED_SECRET = "esdcrytfgvuhbijnkmTGYBHUINJIMKO12348766774"
+app.config.FORWARDED_SECRET = "34geggfdgdgdgertertgertetet5fgfdg4345431"
 
 
 def allow_cors(response: HTTPResponse) -> HTTPResponse:

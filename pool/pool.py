@@ -1,5 +1,5 @@
 import asyncio
-from sanic.log import logger
+import logging
 import pathlib
 import time
 import traceback
@@ -60,8 +60,9 @@ class Pool:
     ):
         self.follow_singleton_tasks: Dict[bytes32, asyncio.Task] = {}
         # logging config
-        self.log = logger
+        self.log = logging
         # If you want to log to a file: use filename='example.log', encoding='utf-8'
+        self.log.basicConfig(level=logging.INFO)
 
         initialize_logging("pool", pool_config["logging"], pathlib.Path(pool_config["logging"]["log_path"]))
 
