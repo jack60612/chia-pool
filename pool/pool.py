@@ -267,12 +267,14 @@ class Pool:
 
                 if farmer_record.is_pool_member:
                     if farmer_record.pps_enabled:
-                        await self.store.add_pps_partial(partial.payload.launcher_id, points_received)
+                        await self.store.add_pps_partial(partial.payload.launcher_id, partial.payload.harvester_id,
+                                                         uint64(int(time.time())), points_received)
                     else:
-                        await self.store.add_partial(partial.payload.launcher_id, uint64(int(time.time())),
-                                                     points_received)
+                        await self.store.add_partial(partial.payload.launcher_id, partial.payload.harvester_id,
+                                                     uint64(int(time.time())), points_received)
                     self.log.info(
-                        f"Farmer pps:{farmer_record.pps_enabled} {farmer_record.launcher_id} updated points to: "
+                        f"Farmer pps:{farmer_record.pps_enabled} {farmer_record.launcher_id}/"
+                        f"{partial.payload.harvester_id} updated points to: "
                         f"{farmer_record.points + points_received}"
                     )
         except Exception as e:

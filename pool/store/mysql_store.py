@@ -70,7 +70,7 @@ class MySQLPoolStore(AbstractPoolStore):
 
         await cursor.execute(
             "CREATE TABLE IF NOT EXISTS partial(launcher_id VARCHAR(256), "
-            "timestamp bigint, difficulty bigint, "
+            "timestamp bigint, difficulty bigint, harvester_id VARCHAR(256), "
             "index (timestamp), index (launcher_id))"
         )
 
@@ -194,7 +194,6 @@ class MySQLPoolStore(AbstractPoolStore):
 
     async def update_difficulty(self, launcher_id: bytes32, difficulty: uint64):
         with (await self.pool) as connection:
-            connection = await self.pool.acquire()
             cursor = await connection.cursor()
             await cursor.execute(
                 f"UPDATE farmer SET difficulty=%s WHERE launcher_id=%s", (difficulty, launcher_id.hex())
@@ -274,7 +273,8 @@ class MySQLPoolStore(AbstractPoolStore):
             cursor = await connection.cursor()
             await cursor.execute(
                 f"SELECT sum(pplns_partials.points) AS points,farmer.payout_instructions FROM pplns_partials,farmer "
-                f"JOIN farmer ON farmer.launcher_id = pplns_partials.launcher_id AND farmer.pps_enabled=1 AND farmer.points>=%s GROUP BY "
+                f"JOIN farmer ON farmer.launcher_id = pplns_partials.launcher_id AND farmer.pps_enabled=1 AND "
+                f"farmer.points>=%s GROUP BY "
                 f"pplns_partials.launcher_id", (min_points))
             rows = await cursor.fetchall()
             await cursor.close()
@@ -299,10 +299,11 @@ class MySQLPoolStore(AbstractPoolStore):
             await connection.commit()
             await cursor.close()
 
-    async def add_partial(self, launcher_id: bytes32, timestamp: uint64, difficulty: uint64):
+    async def add_partial(self, launcher_id: bytes32, harvester_id: bytes32, timestamp: uint64, difficulty: uint64):
         with (await self.pool) as connection:
             cursor = await connection.cursor()
-            await cursor.execute("INSERT INTO partial VALUES(%s, %s, %s)", (launcher_id.hex(), timestamp, difficulty),
+            await cursor.execute("INSERT INTO partial VALUES(%s, %s, %s,%s)", (launcher_id.hex(), harvester_id.hex(),
+                                                                               timestamp, difficulty),
                                  )
             await connection.commit()
             await cursor.close()
@@ -322,12 +323,18 @@ class MySQLPoolStore(AbstractPoolStore):
             )
             await connection.commit()
 
-    async def add_pps_partial(self, launcher_id: bytes32, difficulty: uint64):
+    async def add_pps_partial(self, launcher_id: bytes32, harvester_id: bytes32, timestamp: uint64, difficulty: uint64):
         with (await self.pool) as connection:
             cursor = await connection.cursor()
+            await cursor.execute("INSERT INTO partial VALUES(%s, %s, %s, %s)", (launcher_id.hex(), harvester_id.hex(),
+                                                                                timestamp, difficulty),
+                                 )
+            await connection.commit()
+            await cursor.close()
+            cursor = await connection.cursor()
             await cursor.execute(
-                f"UPDATE farmer set overall_points=overall_points+%s where launcher_id=%s",
-                (difficulty, launcher_id.hex()))
+                f"UPDATE farmer set overall_points=overall_points+%s, points=points+%s where launcher_id=%s",
+                (difficulty, difficulty, launcher_id.hex()))
             await connection.commit()
             await cursor.close()
 
@@ -382,7 +389,8 @@ class MySQLPoolStore(AbstractPoolStore):
             pps = 0
         with (await self.pool) as connection:
             cursor = await connection.cursor()
-            await cursor.execute(f"UPDATE farmer set pps_enabled=%s,pps_change_datetime=SYSDATE(6) where launcher_id=%s", (pps, launcher_id.hex()))
+            await cursor.execute(f"UPDATE farmer set pps_enabled=%s, pps_change_datetime=SYSDATE(6) "
+                                 f"where launcher_id=%s", (pps, launcher_id.hex()))
             await connection.commit()
             await cursor.close()
 
