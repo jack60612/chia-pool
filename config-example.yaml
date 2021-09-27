@@ -20,7 +20,7 @@ store: MySQLPoolStore
 db_host: 127.0.0.1
 db_port: 3306
 db_user: admin
-db_password: X6ZS3VQ48$ZhW
+db_password: X6ZS3VQ48ZhW
 db_name: pool
 min_pps_points: 1
 pps_share_price: 1
