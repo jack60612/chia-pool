@@ -83,7 +83,7 @@ class Pool:
             from pool.store.sqlite_store import SqlitePoolStore
             self.store: AbstractPoolStore = pool_store or SqlitePoolStore()
 
-        self.pool_fee = pool_config["pool_fee"]
+        self.pool_fee = pool_config["pplns_fee"]
 
         self.payment_manager: AbstractPaymentManager = payment_manager or DefaultPaymentManager(
             self.log, pool_config, self.constants)
