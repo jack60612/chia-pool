@@ -1,11 +1,10 @@
 To update from upstream refer to https://gist.github.com/0xjac/85097472043b697ab57ba1b1c7530274
 ## DB EVENTS
-CREATE EVENT update_sec_points ON SCHEDULE EVERY 10 MINUTE DO UPDATE farmer JOIN (SELECT COALESCE(SUM(payouts.points),0) AS totalPoints, payouts.launcher_id FROM payouts GROUP BY payouts.launcher_id) AS pointTotals ON farmer.launcher_id = pointTotals.launcher_id SET farmer.points = pointTotals.totalPoints;
+CREATE EVENT update_sec_points ON SCHEDULE EVERY 10 MINUTE DO UPDATE farmer JOIN (SELECT COALESCE(SUM(pplns_partials.points),0) AS totalPoints, pplns_partials.launcher_id FROM pplns_partials GROUP BY pplns_partials.launcher_id) AS pointTotals ON farmer.launcher_id = pointTotals.launcher_id SET farmer.points = pointTotals.totalPoints;
 
-CREATE EVENT remove_old_points ON SCHEDULE EVERY 1 MINUTE DO DELETE FROM payouts WHERE accept_time < (DATE_SUB(SYSDATE(), INTERVAL 1 DAY));
+CREATE EVENT remove_old_points ON SCHEDULE EVERY 1 MINUTE DO DELETE FROM pplns_partials WHERE accept_time < (DATE_SUB(SYSDATE(), INTERVAL 1 DAY));
 
-CREATE EVENT remove_points_from_old_users ON SCHEDULE EVERY 1 HOUR DO UPDATE farmer JOIN (SELECT farmer.launcher_id, farmer.pps_enabled FROM farmer LEFT JOIN payouts ON payouts.launcher_id = farmer.launcher_id WHERE payouts.launcher_id IS NULL and farmer.pps_enabled = 0 ) AS emptyFarmers ON farmer.launcher_id = emptyFarmers.launcher_id SET farmer.points = 0;
-
+CREATE EVENT remove_points_from_old_users ON SCHEDULE EVERY 1 HOUR DO UPDATE farmer JOIN (SELECT farmer.launcher_id, farmer.pps_enabled FROM farmer LEFT JOIN pplns_partials ON pplns_partials.launcher_id = farmer.launcher_id WHERE pplns_partials.launcher_id IS NULL and farmer.pps_enabled = 0 ) AS emptyFarmers ON farmer.launcher_id = emptyFarmers.launcher_id SET farmer.points = 0;
 ## Pool Reference V1
 This code is provided under the Apache 2.0 license.
 Note: the draft specification is in the SPECIFICATION.md file.
@@ -15,7 +14,7 @@ This repository provides a sample server written in python, which is meant to se
 While this is a fully functional implementation, it requires some work in scalability and security to run in production.
 An FAQ is provided here: https://github.com/Chia-Network/chia-blockchain/wiki/Pooling-FAQ
 
-
+ 
 ### Customizing
 Several things are customizable in this pool reference. This includes:
 * Ways of accumulating farmer payouts and pool rewards - by default it's done with asyncio looped tasks 
