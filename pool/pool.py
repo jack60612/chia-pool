@@ -140,7 +140,7 @@ class Pool:
         self.rpc_hostname = pool_config["rpc_ip_address"]
 
         # check if we are supposed to connect to wallet
-        self.wallet_enabled: bool = pool_config.get("wallet_enabled") or True
+        self.wallet_enabled: bool = pool_config["wallet_enabled"]
 
         # We target these many partials for this number of seconds. We adjust after receiving this many partials.
         self.number_of_partials_target: int = pool_config["number_of_partials_target"]
