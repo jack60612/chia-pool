@@ -47,7 +47,8 @@ class DefaultPaymentManager(AbstractPaymentManager):
         self.default_target_puzzle_hash: bytes32 = bytes32(
             decode_puzzle_hash(self._pool_config["default_target_address"]))
 
-        self.pool_fee = self._pool_config["pool_fee"]
+        self.pplns_fee = self._pool_config["pplns_fee"]
+        self.pps_fee = self._pool_config["pps_fee"]
 
         # The pool fees will be sent to this address. This MUST be on a different key than the target_puzzle_hash,
         # otherwise, the fees will be sent to the users.
@@ -273,7 +274,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
                     continue
 
                 total_amount_claimed = sum([c.amount for c in pplns_coin_records])
-                pool_coin_amount = int(total_amount_claimed * self.pool_fee)
+                pool_coin_amount = int(total_amount_claimed * self.pplns_fee)
                 amount_to_distribute = total_amount_claimed - pool_coin_amount
 
                 if total_amount_claimed < calculate_pool_reward(uint32(1)):  # 1.75 XCH
@@ -360,7 +361,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
                     continue
 
                 total_amount_claimed = sum([c.amount for c in pps_coin_records])
-                pool_coin_amount = int(total_amount_claimed * self.pool_fee)
+                pool_coin_amount = int(total_amount_claimed * self.pps_fee)
                 amount_to_distribute = total_amount_claimed - pool_coin_amount
 
                 if total_amount_claimed < calculate_pool_reward(uint32(1)):  # 1.75 XCH

@@ -4,7 +4,8 @@ pool_info:
   logo_url: https://miner/img/pool_logo.svg
   description: "This Pool allows you to pool."
 welcome_message: "Welcome to Minerium "
-pool_fee: 0.5
+pps_fee: 0.5
+pplns_fee: 0.5
 pool_url: https://chia.minerium.com/
 min_difficulty: 1
 default_difficulty: 1
