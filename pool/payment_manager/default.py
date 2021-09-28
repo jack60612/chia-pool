@@ -269,23 +269,26 @@ class DefaultPaymentManager(AbstractPaymentManager):
                 )
 
                 pplns_coin_records: List[PoolBlockRecord] = await self._store.get_unspent_blocks(False)
+                main_coin_records = pplns_coin_records
 
                 if len(coin_records) == 0 or len(pplns_coin_records) == 0:
                     pps_coin_records: List[PoolBlockRecord] = await self._store.get_unspent_blocks(True)
                     if self.pplns_default and len(coin_records) != 0 and len(pps_coin_records) == 0:
                         self._logger.warning("Blocks that are not in the db were found. Paying out to pplns.")
+                        main_coin_records = coin_records
                     else:
                         self._logger.info("No PPLNS funds to distribute.")
                         await asyncio.sleep(120)
                         continue
 
-                total_amount_claimed = sum([c.amount for c in pplns_coin_records])
+                total_amount_claimed = sum([c.amount for c in main_coin_records])
                 pool_coin_amount = int(total_amount_claimed * self.pplns_fee)
                 amount_to_distribute = total_amount_claimed - pool_coin_amount
 
                 if total_amount_claimed < calculate_pool_reward(uint32(1)):  # 1.75 XCH
                     self._logger.info(f"Do not have enough funds to distribute: {total_amount_claimed}, "
                                       f"skipping payout")
+                    await asyncio.sleep(10)
                     continue
 
                 self._logger.info(f"Total amount claimed: {total_amount_claimed / (10 ** 12)}")
@@ -378,6 +381,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
                 if total_amount_claimed < calculate_pool_reward(uint32(1)):  # 1.75 XCH
                     self._logger.info(f"Do not have enough funds to distribute: {total_amount_claimed}, "
                                       f"skipping payout")
+                    await asyncio.sleep(10)
                     continue
 
                 self._logger.info(f"Total amount claimed: {total_amount_claimed / (10 ** 12)}")
