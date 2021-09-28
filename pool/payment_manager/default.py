@@ -27,6 +27,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
         super().__init__(*args, **kwargs)
 
         # Don't scan anything before this height, for efficiency (for example pool start date)
+        self.pplns_default = self._pool_config["pplns_default"]  # should blocks not in the db be payed out to pplns.
         self.min_points = self._pool_config["min_pps_points"]
         self.pps_share_price: float = 0
         self.scan_start_height: uint32 = uint32(self._pool_config["scan_start_height"])
@@ -270,9 +271,13 @@ class DefaultPaymentManager(AbstractPaymentManager):
                 pplns_coin_records: List[PoolBlockRecord] = await self._store.get_unspent_blocks(False)
 
                 if len(coin_records) == 0 or len(pplns_coin_records) == 0:
-                    self._logger.info("No PPLNS funds to distribute.")
-                    await asyncio.sleep(120)
-                    continue
+                    pps_coin_records: List[PoolBlockRecord] = await self._store.get_unspent_blocks(True)
+                    if self.pplns_default and len(coin_records) != 0 and len(pps_coin_records) == 0:
+                        self._logger.warning("Blocks that are not in the db were found. Paying out to pplns.")
+                    else:
+                        self._logger.info("No PPLNS funds to distribute.")
+                        await asyncio.sleep(120)
+                        continue
 
                 total_amount_claimed = sum([c.amount for c in pplns_coin_records])
                 pool_coin_amount = int(total_amount_claimed * self.pplns_fee)
