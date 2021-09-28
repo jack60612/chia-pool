@@ -28,7 +28,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
 
         # Don't scan anything before this height, for efficiency (for example pool start date)
         self.min_points = self._pool_config["min_pps_points"]
-        self.pps_share_price: float
+        self.pps_share_price: float = 0
         self.scan_start_height: uint32 = uint32(self._pool_config["scan_start_height"])
 
         # Interval for scanning and collecting the pool rewards
@@ -108,10 +108,11 @@ class DefaultPaymentManager(AbstractPaymentManager):
 
     async def update_pps_price_loop(self):
         while True:
-            # get network state with including netspace as bytes
-            network_state = await self._node_rpc_client.get_blockchain_state()
-            # convert bytes to TiB
-            netspace_tib = network_state["space"] / 1.1e+12  # scientific notation
+            if not self._state_keeper.blockchain_state["sync"]["synced"]:
+                self._logger.warning("Not synced, waiting")
+                await asyncio.sleep(60)
+            # convert bytes to TiB from network stats
+            netspace_tib = self._state_keeper.blockchain_state["space"] / 1.1e+12  # scientific notation
             # there are 4608 blocks in a day. & each TiB gives 100 points a day.
             chia_share_price = (4608 / netspace_tib) / 100  # how much is earned for each Tib divided by 100 to get
             # xch per share
@@ -342,6 +343,11 @@ class DefaultPaymentManager(AbstractPaymentManager):
 
                 if self.pending_payments.qsize() != 0:
                     self._logger.warning(f"Pending payments ({self.pending_payments.qsize()}), waiting")
+                    await asyncio.sleep(60)
+                    continue
+
+                if self.pps_share_price == 0:
+                    self._logger.warning("Share price not set, waiting.")
                     await asyncio.sleep(60)
                     continue
 
