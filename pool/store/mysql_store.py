@@ -302,8 +302,8 @@ class MySQLPoolStore(AbstractPoolStore):
     async def add_partial(self, launcher_id: bytes32, harvester_id: bytes32, timestamp: uint64, difficulty: uint64):
         with (await self.pool) as connection:
             cursor = await connection.cursor()
-            await cursor.execute("INSERT INTO partial VALUES(%s, %s, %s,%s)", (launcher_id.hex(), harvester_id.hex(),
-                                                                               timestamp, difficulty),
+            await cursor.execute("INSERT INTO partial VALUES(%s, %s, %s, %s)", (launcher_id.hex(), timestamp,
+                                                                                difficulty, harvester_id.hex()),
                                  )
             await connection.commit()
             await cursor.close()
@@ -326,8 +326,8 @@ class MySQLPoolStore(AbstractPoolStore):
     async def add_pps_partial(self, launcher_id: bytes32, harvester_id: bytes32, timestamp: uint64, difficulty: uint64):
         with (await self.pool) as connection:
             cursor = await connection.cursor()
-            await cursor.execute("INSERT INTO partial VALUES(%s, %s, %s, %s)", (launcher_id.hex(), harvester_id.hex(),
-                                                                                timestamp, difficulty),
+            await cursor.execute("INSERT INTO partial VALUES(%s, %s, %s, %s)", (launcher_id.hex(), timestamp,
+                                                                                difficulty, harvester_id.hex()),
                                  )
             await connection.commit()
             await cursor.close()

@@ -28,7 +28,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
 
         # Don't scan anything before this height, for efficiency (for example pool start date)
         self.min_points = self._pool_config["min_pps_points"]
-        self.pps_share_price = self._pool_config["pps_share_price"]
+        self.pps_share_price: float
         self.scan_start_height: uint32 = uint32(self._pool_config["scan_start_height"])
 
         # Interval for scanning and collecting the pool rewards
@@ -63,6 +63,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
         self.scan_p2_singleton_puzzle_hashes: Set[bytes32] = set()
 
         self.check_new_farmers_loop_task: Optional[asyncio.Task] = None
+        self.update_pps_price_loop_task: Optional[asyncio.Task] = None
         self.collect_pool_rewards_loop_task: Optional[asyncio.Task] = None
         self.create_payment_loop_task: Optional[asyncio.Task] = None
         self.create_pps_payment_loop_task: Optional[asyncio.Task] = None
@@ -75,12 +76,15 @@ class DefaultPaymentManager(AbstractPaymentManager):
 
         if self._standalone is True:
             self.check_new_farmers_loop_task = asyncio.create_task(self.check_new_farmers_loop())
+        self.update_pps_price_loop_task = asyncio.create_task(self.update_pps_price_loop())
         self.collect_pool_rewards_loop_task = asyncio.create_task(self.collect_pool_rewards_loop())
         self.create_payment_loop_task = asyncio.create_task(self.create_payment_loop())
         self.create_pps_payment_loop_task = asyncio.create_task(self.create_pps_payment_loop())
         self.submit_payment_loop_task = asyncio.create_task(self.submit_payment_loop())
 
     async def stop(self):
+        if self.update_pps_price_loop_task is not None:
+            self.update_pps_price_loop_task.cancel()
         if self.check_new_farmers_loop_task is not None:
             self.check_new_farmers_loop_task.cancel()
         if self.collect_pool_rewards_loop_task is not None:
@@ -100,6 +104,20 @@ class DefaultPaymentManager(AbstractPaymentManager):
             self._logger.info("Checking for new pool members")
             self.scan_p2_singleton_puzzle_hashes = await self._store.get_pay_to_singleton_phs()
             await asyncio.sleep(1800)
+
+    async def update_pps_price_loop(self):
+        while True:
+            # get network state with including netspace as bytes
+            network_state = await self._node_rpc_client.get_blockchain_state()
+            # convert bytes to TiB
+            netspace_tib = network_state["space"] / 1.1e+12  # scientific notation
+            # there are 4608 blocks in a day. & each TiB gives 100 points a day.
+            chia_share_price = (4608 / netspace_tib) / 100  # how much is earned for each Tib divided by 100 to get
+            # xch per share
+            # mojo per share which is then used for payouts
+            self.pps_share_price = chia_share_price / 0.000000000001
+            self._logger.info(f"Updated Price per share to {self.pps_share_price}")
+            await asyncio.sleep(240)
 
     async def collect_pool_rewards_loop(self):
         """
@@ -394,7 +412,6 @@ class DefaultPaymentManager(AbstractPaymentManager):
                 error_stack = traceback.format_exc()
                 self._logger.error(f"Unexpected error in create_payments_loop: {e} {error_stack}")
                 await asyncio.sleep(self.payment_interval)
-
 
     async def submit_payment_loop(self):
         while True:
