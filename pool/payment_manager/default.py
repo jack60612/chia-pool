@@ -269,19 +269,18 @@ class DefaultPaymentManager(AbstractPaymentManager):
                 )
 
                 pplns_coin_records: List[PoolBlockRecord] = await self._store.get_unspent_blocks(False)
-                main_coin_records = pplns_coin_records
+                total_amount_claimed = sum([c.amount for c in pplns_coin_records])
 
                 if len(coin_records) == 0 or len(pplns_coin_records) == 0:
                     pps_coin_records: List[PoolBlockRecord] = await self._store.get_unspent_blocks(True)
                     if self.pplns_default is True and len(coin_records) >= 1 and len(pps_coin_records) == 0:
                         self._logger.warning("Blocks that are not in the db were found. Paying out to pplns.")
-                        main_coin_records = coin_records
+                        total_amount_claimed = sum([c.coin.amount for c in coin_records])
                     else:
                         self._logger.info("No PPLNS funds to distribute.")
                         await asyncio.sleep(120)
                         continue
 
-                total_amount_claimed = sum([c.amount for c in main_coin_records])
                 pool_coin_amount = int(total_amount_claimed * self.pplns_fee)
                 amount_to_distribute = total_amount_claimed - pool_coin_amount
 
