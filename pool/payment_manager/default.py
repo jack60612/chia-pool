@@ -273,7 +273,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
 
                 if len(coin_records) == 0 or len(pplns_coin_records) == 0:
                     pps_coin_records: List[PoolBlockRecord] = await self._store.get_unspent_blocks(True)
-                    if self.pplns_default and len(coin_records) != 0 and len(pps_coin_records) == 0:
+                    if self.pplns_default is True and len(coin_records) >= 1 and len(pps_coin_records) == 0:
                         self._logger.warning("Blocks that are not in the db were found. Paying out to pplns.")
                         main_coin_records = coin_records
                     else:
