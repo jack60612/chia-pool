@@ -14,6 +14,7 @@ pool_fee_address: txch1mdw5usvgjrhx6e8ja396kyfnwy3jyzltnkdytvt8vcky7nl7d6us54s3h
 wallet_fingerprint: 1718616103
 authentication_token_timeout: 5
 pplns_default: true
+pplns_n_value: 100000
 wallet_id: 1
 node_rpc_port: 8555
 wallet_rpc_port: 9256
