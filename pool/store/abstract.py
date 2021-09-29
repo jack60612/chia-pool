@@ -98,15 +98,3 @@ class AbstractPoolStore(ABC):
     @abstractmethod
     async def get_payment_system(self, launcher_id: bytes32):
         """Get Current payment system status for a launcher_id"""
-
-    @abstractmethod
-    async def add_unspent_block(self, block_height: int, pps: bool, amount: float):
-        """Add Unspent block(block that has not been initially distributed) to the db. """
-
-    @abstractmethod
-    async def get_unspent_blocks(self, pps: bool) -> List[PoolBlockRecord]:
-        """Output all Unspent blocks for distribution."""
-
-    @abstractmethod
-    async def mark_block_spent(self, claim_timestamp):
-        """Mark block as spent but still keep in db for archival needs."""

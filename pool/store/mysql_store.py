@@ -98,17 +98,6 @@ class MySQLPoolStore(AbstractPoolStore):
 
             )
         )
-        await cursor.execute(
-            (
-                "CREATE TABLE IF NOT EXISTS blocks("
-                "claim_timestamp DATETIME(6) PRIMARY KEY,"
-                "block_height bigint,"
-                "pps bool,"
-                "amount float,"
-                "spent bool,"
-                "index (spent))"
-            )
-        )
         await connection.commit()
         self.pool.release(connection)
 
@@ -387,41 +376,5 @@ class MySQLPoolStore(AbstractPoolStore):
             cursor = await connection.cursor()
             await cursor.execute(f"UPDATE farmer set pps_enabled=%s, pps_change_datetime=SYSDATE(6) "
                                  f"where launcher_id=%s", (pps_enabled, launcher_id.hex()))
-            await connection.commit()
-            await cursor.close()
-
-    async def get_payment_system(self, launcher_id: bytes32):
-        with (await self.pool) as connection:
-            cursor = await connection.cursor()
-            await cursor.execute("SELECT pps_enabled,pps_change_datetime from farmer where launcher_id=%s",
-                                 (launcher_id.hex()))
-            row = await cursor.fetchone()
-            await cursor.close()
-            result = [True if row[0] == 1 else False, row[1]]
-            return result
-
-    async def add_unspent_block(self, block_height: int, pps: bool, amount: float):
-        with (await self.pool) as connection:
-            cursor = await connection.cursor()
-            await cursor.execute("INSERT INTO blocks(claim_timestamp,block_height,pps,amount,spent)"
-                                 "VALUES(SYSDATE(6),%s,%s,%s,0)", (block_height, pps, amount))
-            await connection.commit()
-            await cursor.close()
-
-    async def get_unspent_blocks(self, pps: bool) -> List[PoolBlockRecord]:
-        with (await self.pool) as connection:
-            cursor = await connection.cursor()
-            await cursor.execute("SELECT * from blocks where spent=0 and pps=%s", (pps))
-            rows = await cursor.fetchall()
-            await cursor.close()
-            result_list = []
-            for row in rows:
-                result_list.append(self._row_to_block_record(row))
-            return result_list
-
-    async def mark_block_spent(self, claim_timestamp):
-        with (await self.pool) as connection:
-            cursor = await connection.cursor()
-            await cursor.execute(f"UPDATE blocks set spent=1 where claim_timestamp=%s", (claim_timestamp))
             await connection.commit()
             await cursor.close()
