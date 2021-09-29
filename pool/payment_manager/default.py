@@ -88,7 +88,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
         self.update_pps_price_loop_task = asyncio.create_task(self.update_pps_price_loop())
         self.collect_pool_rewards_loop_task = asyncio.create_task(self.collect_pool_rewards_loop())
         self.create_payment_loop_task = asyncio.create_task(self.create_payment_loop())
-        #self.create_pps_payment_loop_task = asyncio.create_task(self.create_pps_payment_loop())
+        self.create_pps_payment_loop_task = asyncio.create_task(self.create_pps_payment_loop())
         self.submit_payment_loop_task = asyncio.create_task(self.submit_payment_loop())
         self.pps_submit_payment_loop_task = asyncio.create_task(self.pps_submit_payment_loop())
 
@@ -364,19 +364,19 @@ class DefaultPaymentManager(AbstractPaymentManager):
                     continue
 
                 if self.pending_payments.qsize() != 0:
-                    self._logger.warning(f"Pending payments ({self.pending_payments.qsize()}), waiting")
+                    self._logger.warning(f"PPS: Pending payments ({self.pps_pending_payments.qsize()}), waiting")
                     await asyncio.sleep(60)
                     continue
 
                 if self.pps_share_price == 0:
-                    self._logger.warning("Share price not set, waiting.")
+                    self._logger.warning("PPS Share price not set, waiting.")
                     await asyncio.sleep(60)
                     continue
 
                 self._logger.info("Starting to create pps payments")
 
                 coin_records: List[CoinRecord] = await self._node_rpc_client.get_coin_records_by_puzzle_hash(
-                    self.default_target_puzzle_hash,
+                    self.pps_target_puzzle_hash,
                     include_spent_coins=False,
                     start_height=self.scan_start_height,
                 )
@@ -419,13 +419,13 @@ class DefaultPaymentManager(AbstractPaymentManager):
                                 additions_sub_list.append({"puzzle_hash": ph, "amount": points * mojo_per_point})
 
                             if len(additions_sub_list) == self.max_additions_per_transaction:
-                                await self.pending_payments.put(additions_sub_list.copy())
+                                await self.pps_pending_payments.put(additions_sub_list.copy())
                                 self._logger.info(f"PPS:Will make payments: {additions_sub_list}")
                                 additions_sub_list = []
 
                         if len(additions_sub_list) > 0:
                             self._logger.info(f"PPS:Will make payments: {additions_sub_list}")
-                            await self.pending_payments.put(additions_sub_list.copy())
+                            await self.pps_pending_payments.put(additions_sub_list.copy())
 
                         # Subtract the points from each pps farmer
                         await self._store.clear_pps_points(self.min_points)
