@@ -27,9 +27,9 @@ class DefaultPaymentManager(AbstractPaymentManager):
         super().__init__(*args, **kwargs)
 
         # Don't scan anything before this height, for efficiency (for example pool start date)
-        self.pplns_n_value = self._pool_config["pplns_n_value"]
         self.min_points = self._pool_config["min_pps_points"]
         self.pps_share_price: float = 0
+        self.pplns_n_value = self._pool_config["pplns_n_value"]
         self.scan_start_height: uint32 = uint32(self._pool_config["scan_start_height"])
 
         # Interval for scanning and collecting the pool rewards
@@ -58,6 +58,8 @@ class DefaultPaymentManager(AbstractPaymentManager):
         # This is the wallet fingerprint and ID for the wallet spending the funds from `self.default_target_puzzle_hash`
         self.wallet_fingerprint = self._pool_config["wallet_fingerprint"]
         self.wallet_id = self._pool_config["wallet_id"]
+        self.pps_wallet_fingerprint = self._pool_config["pps_wallet_fingerprint"]
+        self.pps_wallet_id = self._pool_config["pps_wallet_id"]
 
         # This is the list of payments that we have not sent yet, to farmers
         self.pending_payments: Optional[asyncio.Queue] = None
