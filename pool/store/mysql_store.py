@@ -249,7 +249,7 @@ class MySQLPoolStore(AbstractPoolStore):
         with (await self.pool) as connection:
             cursor = await connection.cursor()
             await cursor.execute(
-                f"SELECT sum(pplns_partials.points) AS points,farmer.payout_instructions FROM pplns_partials,farmer "
+                f"SELECT sum(pplns_partials.points) AS points, farmer.payout_instructions FROM pplns_partials "
                 f"JOIN farmer ON farmer.launcher_id = pplns_partials.launcher_id AND farmer.pps_enabled=0 GROUP BY "
                 f"pplns_partials.launcher_id")
             rows = await cursor.fetchall()

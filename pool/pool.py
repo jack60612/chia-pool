@@ -261,7 +261,8 @@ class Pool:
                 farmer_record: Optional[FarmerRecord] = await self.store.get_farmer_record(partial.payload.launcher_id)
 
                 assert (
-                        partial.payload.proof_of_space.pool_contract_puzzle_hash == farmer_record.p2_singleton_puzzle_hash
+                        partial.payload.proof_of_space.pool_contract_puzzle_hash ==
+                        farmer_record.p2_singleton_puzzle_hash
                 )
 
                 if farmer_record.is_pool_member:
