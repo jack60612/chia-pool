@@ -27,6 +27,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
         super().__init__(*args, **kwargs)
 
         # Don't scan anything before this height, for efficiency (for example pool start date)
+        self.pplns_n_value = self._pool_config["pplns_n_value"]
         self.pplns_default = self._pool_config["pplns_default"]  # should blocks not in the db be payed out to pplns.
         self.min_points = self._pool_config["min_pps_points"]
         self.pps_share_price: float = 0
@@ -114,12 +115,13 @@ class DefaultPaymentManager(AbstractPaymentManager):
                 await asyncio.sleep(60)
             # convert bytes to TiB from network stats
             netspace_tib = self._state_keeper.blockchain_state["space"] / 1.1e+12  # scientific notation
-            # there are 4608 blocks in a day. & each TiB gives 100 points a day.
-            chia_share_price = (4608 / netspace_tib) / 100  # how much is earned for each Tib divided by 100 to get
+            # there are 4608 blocks in a day but farmer gets 0.25 so it should be divided by 4032.
+            # & each TiB gives 100 points a day.
+            chia_share_price = (4032 / netspace_tib) / 100  # how much is earned for each Tib divided by 100 to get
             # xch per share
             # mojo per share which is then used for payouts
             self.pps_share_price = chia_share_price / 0.000000000001
-            self._logger.info(f"Updated Price per share to {self.pps_share_price}")
+            self._logger.info(f"Updated Price per share to {chia_share_price} chia")
             await asyncio.sleep(240)
 
     async def collect_pool_rewards_loop(self):
@@ -299,7 +301,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
                     # but other blockchain addresses can also be used.
                     points_and_ph: List[
                         Tuple[uint64, bytes]
-                    ] = await self._store.get_farmer_points_and_payout_instructions()
+                    ] = await self._store.get_farmer_points_and_payout_instructions(self.pplns_n_value)
                     total_points = sum([pt for (pt, ph) in points_and_ph])
                     if total_points > 0:
                         mojo_per_point = floor(amount_to_distribute / total_points)

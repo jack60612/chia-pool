@@ -245,13 +245,13 @@ class MySQLPoolStore(AbstractPoolStore):
             await cursor.close()
             return [self._row_to_farmer_record(row) for row in rows]
 
-    async def get_farmer_points_and_payout_instructions(self) -> List[Tuple[uint64, bytes]]:
+    async def get_farmer_points_and_payout_instructions(self, pplns_n_value: int) -> List[Tuple[uint64, bytes]]:
         with (await self.pool) as connection:
             cursor = await connection.cursor()
             await cursor.execute(
                 f"SELECT sum(pplns_partials.points) AS points, farmer.payout_instructions FROM pplns_partials "
                 f"JOIN farmer ON farmer.launcher_id = pplns_partials.launcher_id AND farmer.pps_enabled=0 GROUP BY "
-                f"pplns_partials.launcher_id")
+                f"pplns_partials.launcher_id ORDER BY pplns_partials.accept_time DESC LIMIT {pplns_n_value} ")
             rows = await cursor.fetchall()
             await cursor.close()
             accumulated: Dict[bytes32, uint64] = {}
@@ -382,15 +382,11 @@ class MySQLPoolStore(AbstractPoolStore):
             await connection.commit()
             await cursor.close()
 
-    async def change_payment_system(self, launcher_id: bytes32, pps_enabled: bool):
-        if pps_enabled == 1 or True:
-            pps = 1
-        else:
-            pps = 0
+    async def change_payment_system(self, launcher_id: bytes32, pps_enabled: int):
         with (await self.pool) as connection:
             cursor = await connection.cursor()
             await cursor.execute(f"UPDATE farmer set pps_enabled=%s, pps_change_datetime=SYSDATE(6) "
-                                 f"where launcher_id=%s", (pps, launcher_id.hex()))
+                                 f"where launcher_id=%s", (pps_enabled, launcher_id.hex()))
             await connection.commit()
             await cursor.close()
 

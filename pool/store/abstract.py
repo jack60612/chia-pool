@@ -61,7 +61,7 @@ class AbstractPoolStore(ABC):
         """Fetch Farmers matching given puzzle hashes"""
 
     @abstractmethod
-    async def get_farmer_points_and_payout_instructions(self) -> List[Tuple[uint64, bytes]]:
+    async def get_farmer_points_and_payout_instructions(self, pplns_n_value: int) -> List[Tuple[uint64, bytes]]:
         """Fetch pplns farmers and their respective payout instructions"""
 
     @abstractmethod
@@ -92,7 +92,7 @@ class AbstractPoolStore(ABC):
         """Add new block to given Farmer's record"""
 
     @abstractmethod
-    async def change_payment_system(self, launcher_id: bytes32, pps_enabled: bool):
+    async def change_payment_system(self, launcher_id: bytes32, pps_enabled: int):
         """Enable or disable pps payment system as requested by pps"""
 
     @abstractmethod

@@ -301,9 +301,13 @@ class PoolServer:
         if payment_record is not None:
             if payment_record[0] == pps or pps is None:
                 response = {'pps_enabled': payment_record[0], 'pps_changed': False}
-            elif pps is not None:
-                await self.pool.store.change_payment_system(launcher_id, pps)
-                response = {'pps_enabled': pps, 'pps_changed': True}
+            elif pps is True:
+                await self.pool.store.change_payment_system(launcher_id, 1)
+                response = {'pps_enabled': True, 'pps_changed': True}
+            elif pps is False:
+                await self.pool.store.change_payment_system(launcher_id, 0)
+                response = {'pps_enabled': False, 'pps_changed': True}
+
 
         return sanic_jsonify(response)
 
