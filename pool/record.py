@@ -26,12 +26,3 @@ class FarmerRecord(Streamable):
     pps_enabled: bool  # if pps is enabled this is set to true otherwise it is set to false.
 
 
-@dataclass(frozen=True)
-class PoolBlockRecord:
-    timestamp: datetime.datetime  # the date and time that the block was won
-    block_height: int   # the height of the block won
-    pps: bool   # if the block was won by a pps farmer
-    amount: float  # Value of the coin
-    spent: bool  # if coin is spent for payments
-
-

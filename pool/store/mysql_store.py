@@ -12,7 +12,7 @@ from chia.types.coin_spend import CoinSpend
 from chia.util.ints import uint64
 
 from .abstract import AbstractPoolStore
-from ..record import FarmerRecord, PoolBlockRecord
+from ..record import FarmerRecord
 from ..util import RequestMetadata
 
 pymysql.converters.encoders[uint64] = pymysql.converters.escape_int
@@ -120,16 +120,6 @@ class MySQLPoolStore(AbstractPoolStore):
             row[9],
             True if row[10] == 1 else False,
             True if row[11] == 1 else False,
-        )
-
-    @staticmethod
-    def _row_to_block_record(row) -> PoolBlockRecord:
-        return PoolBlockRecord(
-            row[0],
-            row[1],
-            True if row[2] == 1 else False,
-            row[3],
-            True if row[4] == 1 else False,
         )
 
     async def add_farmer_record(self, farmer_record: FarmerRecord, metadata: RequestMetadata):

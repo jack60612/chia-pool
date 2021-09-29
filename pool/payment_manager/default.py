@@ -13,7 +13,7 @@ from chia.wallet.transaction_record import TransactionRecord
 from chia.pools.pool_puzzles import get_most_recent_singleton_coin_from_coin_spend
 
 from pool.singleton import create_absorb_transaction
-from pool.record import FarmerRecord, PoolBlockRecord
+from pool.record import FarmerRecord
 
 from pool.payment_manager.abstract import AbstractPaymentManager
 
@@ -66,6 +66,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
 
         # This is the list of payments that we have not sent yet, to farmers
         self.pending_payments: Optional[asyncio.Queue] = None
+        self.pps_pending_payments: Optional[asyncio.Queue] = None
 
         self.scan_p2_singleton_puzzle_hashes: Set[bytes32] = set()
 
@@ -75,6 +76,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
         self.create_payment_loop_task: Optional[asyncio.Task] = None
         self.create_pps_payment_loop_task: Optional[asyncio.Task] = None
         self.submit_payment_loop_task: Optional[asyncio.Task] = None
+        self.pps_submit_payment_loop_task: Optional[asyncio.Task] = None
 
     async def start(self, *args, **kwargs):
         await super().start(*args, **kwargs)
@@ -88,6 +90,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
         self.create_payment_loop_task = asyncio.create_task(self.create_payment_loop())
         #self.create_pps_payment_loop_task = asyncio.create_task(self.create_pps_payment_loop())
         self.submit_payment_loop_task = asyncio.create_task(self.submit_payment_loop())
+        self.pps_submit_payment_loop_task = asyncio.create_task(self.pps_submit_payment_loop())
 
     async def stop(self):
         if self.update_pps_price_loop_task is not None:
@@ -102,6 +105,8 @@ class DefaultPaymentManager(AbstractPaymentManager):
             self.create_pps_payment_loop_task.cancel()
         if self.submit_payment_loop_task is not None:
             self.submit_payment_loop_task.cancel()
+        if self.pps_submit_payment_loop_task is not None:
+            self.pps_submit_payment_loop_task.cancel()
 
     def register_new_farmer(self, farmer_record: FarmerRecord):
         self.scan_p2_singleton_puzzle_hashes.add(farmer_record.p2_singleton_puzzle_hash)
@@ -368,7 +373,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
                     await asyncio.sleep(60)
                     continue
 
-                self._logger.info("Starting to create payment")
+                self._logger.info("Starting to create pps payments")
 
                 coin_records: List[CoinRecord] = await self._node_rpc_client.get_coin_records_by_puzzle_hash(
                     self.default_target_puzzle_hash,
@@ -386,14 +391,14 @@ class DefaultPaymentManager(AbstractPaymentManager):
                 amount_to_distribute = total_amount_claimed - pool_coin_amount
 
                 if total_amount_claimed < calculate_pool_reward(uint32(1)):  # 1.75 XCH
-                    self._logger.info(f"Do not have enough funds to distribute: {total_amount_claimed}, "
+                    self._logger.info(f"Do not have enough pps funds to distribute: {total_amount_claimed}, "
                                       f"skipping payout")
                     await asyncio.sleep(10)
                     continue
 
-                self._logger.info(f"Total amount claimed: {total_amount_claimed / (10 ** 12)}")
-                self._logger.info(f"Pool coin amount (includes blockchain fee) {pool_coin_amount / (10 ** 12)}")
-                self._logger.info(f"Total amount to distribute: {amount_to_distribute / (10 ** 12)}")
+                self._logger.info(f"PPS:Total amount claimed: {total_amount_claimed / (10 ** 12)}")
+                self._logger.info(f"PPS:Pool coin amount (includes blockchain fee) {pool_coin_amount / (10 ** 12)}")
+                self._logger.info(f"PPS:Total amount to distribute: {amount_to_distribute / (10 ** 12)}")
 
                 async with self._store.lock:
                     # Get the points of each farmer, as well as payout instructions. Here a chia address is used,
@@ -415,25 +420,25 @@ class DefaultPaymentManager(AbstractPaymentManager):
 
                             if len(additions_sub_list) == self.max_additions_per_transaction:
                                 await self.pending_payments.put(additions_sub_list.copy())
-                                self._logger.info(f"Will make payments: {additions_sub_list}")
+                                self._logger.info(f"PPS:Will make payments: {additions_sub_list}")
                                 additions_sub_list = []
 
                         if len(additions_sub_list) > 0:
-                            self._logger.info(f"Will make payments: {additions_sub_list}")
+                            self._logger.info(f"PPS:Will make payments: {additions_sub_list}")
                             await self.pending_payments.put(additions_sub_list.copy())
 
                         # Subtract the points from each pps farmer
                         await self._store.clear_pps_points(self.min_points)
                     else:
-                        self._logger.info(f"No points for any farmer. Waiting {self.payment_interval}")
+                        self._logger.info(f"PPS: No points for any farmer. Waiting {self.payment_interval}")
 
                 await asyncio.sleep(self.payment_interval)
             except asyncio.CancelledError:
-                self._logger.info("Cancelled create_payments_loop, closing")
+                self._logger.info("Cancelled create_pps_payment_loop, closing")
                 return
             except Exception as e:
                 error_stack = traceback.format_exc()
-                self._logger.error(f"Unexpected error in create_payments_loop: {e} {error_stack}")
+                self._logger.error(f"Unexpected error in create_pps_payment_loop: {e} {error_stack}")
                 await asyncio.sleep(self.payment_interval)
 
     async def submit_payment_loop(self):
@@ -497,4 +502,66 @@ class DefaultPaymentManager(AbstractPaymentManager):
             except Exception as e:
                 # TODO(pool): retry transaction if failed
                 self._logger.error(f"Unexpected error in submit_payment_loop: {e}")
+                await asyncio.sleep(60)
+
+    async def pps_submit_payment_loop(self):
+        while True:
+            try:
+                peak_height = self._state_keeper.blockchain_state["peak"].height
+                await self._wallet_rpc_client.log_in_and_skip(fingerprint=self.pps_wallet_fingerprint)
+                if not self._state_keeper.blockchain_state["sync"]["synced"] or not self._state_keeper.wallet_synced:
+                    self._logger.warning("Waiting for wallet sync")
+                    await asyncio.sleep(60)
+                    continue
+
+                payment_targets = await self.pps_pending_payments.get()
+                assert len(payment_targets) > 0
+
+                self._logger.info(f"Submitting a pps payment: {payment_targets}")
+
+                # TODO(pool): make sure you have enough to pay the blockchain fee, this will be taken out of the pool
+                # fee itself. Alternatively you can set it to 0 and wait longer
+                # blockchain_fee = 0.00001 * (10 ** 12) * len(payment_targets)
+                blockchain_fee: uint64 = uint64(0)
+                try:
+                    transaction: TransactionRecord = await self._wallet_rpc_client.send_transaction_multi(
+                        self.pps_wallet_id, payment_targets, fee=blockchain_fee
+                    )
+                except ValueError as e:
+                    self._logger.error(f"Error making pps payment: {e}")
+                    await asyncio.sleep(10)
+                    await self.pps_pending_payments.put(payment_targets)
+                    continue
+
+                self._logger.info(f"pps Transaction: {transaction}")
+
+                while (
+                        not transaction.confirmed
+                        or not (peak_height - transaction.confirmed_at_height) > self.confirmation_security_threshold
+                ):
+                    transaction = await self._wallet_rpc_client.get_transaction(self.pps_wallet_id, transaction.name)
+                    peak_height = self._state_keeper.blockchain_state["peak"].height
+                    self._logger.info(
+                        f"Waiting for pps transaction to obtain {self.confirmation_security_threshold} confirmations"
+                    )
+                    if not transaction.confirmed:
+                        self._logger.info(f"Not confirmed. In mempool? {transaction.is_in_mempool()}")
+                    else:
+                        self._logger.info(f"Confirmations: {peak_height - transaction.confirmed_at_height}")
+                    await asyncio.sleep(10)
+
+                self._logger.info(f"Successfully confirmed pps payments {payment_targets}")
+                # add payouts to db
+                try:
+                    await self._store.add_payouts(transaction.confirmed_at_height, payment_targets, transaction.name)
+                    self._logger.info(f"Successfully added pps payments to Database")
+                except Exception as e:
+                    self._logger.error(f"Error adding pps payouts to database: {e}")
+
+            except asyncio.CancelledError:
+                self._logger.info("Cancelled pps_submit_payment_loop, closing")
+                return
+            except Exception as e:
+                # TODO(pool): retry transaction if failed
+                self._logger.error(f"Unexpected error in pps_submit_payment_loop: {e}")
                 await asyncio.sleep(60)
