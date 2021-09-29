@@ -378,3 +378,14 @@ class MySQLPoolStore(AbstractPoolStore):
                                  f"where launcher_id=%s", (pps_enabled, launcher_id.hex()))
             await connection.commit()
             await cursor.close()
+
+    async def get_payment_system(self, launcher_id: bytes32):
+        with (await self.pool) as connection:
+            cursor = await connection.cursor()
+            await cursor.execute("SELECT pps_enabled,pps_change_datetime from farmer where launcher_id=%s",
+                                 (launcher_id.hex()))
+            row = await cursor.fetchone()
+            await cursor.close()
+            result = [True if row[0] == 1 else False, row[1]]
+            return result
+        
