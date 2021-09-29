@@ -388,4 +388,4 @@ class MySQLPoolStore(AbstractPoolStore):
             await cursor.close()
             result = [True if row[0] == 1 else False, row[1]]
             return result
-        
+
