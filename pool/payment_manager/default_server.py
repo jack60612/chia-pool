@@ -46,8 +46,6 @@ class PaymentServer:
         # This is the wallet fingerprint and ID for the wallet spending the funds from `self.default_target_puzzle_hash`
         self.wallet_fingerprint = pool_config["wallet_fingerprint"]
         self.wallet_id = pool_config["wallet_id"]
-        self.pps_wallet_fingerprint = pool_config["pps_wallet_fingerprint"]
-        self.pps_wallet_id = pool_config["pps_wallet_id"]
 
         # rpc hostname to connect to
         self.rpc_hostname = pool_config["rpc_ip_address"]
@@ -55,7 +53,6 @@ class PaymentServer:
         self.node_rpc_client: Optional[FullNodeRpcClient] = None
         self.node_rpc_port = pool_config["node_rpc_port"]
         self.wallet_rpc_client: Optional[WalletRpcClient] = None
-        self.pps_wallet_rpc_client: Optional[WalletRpcClient] = None
         self.wallet_rpc_port = pool_config["wallet_rpc_port"]
 
         # load payment manager and state keeper
@@ -67,11 +64,10 @@ class PaymentServer:
         await self.store.connect()
         await self.init_node_rpc()
         await self.init_wallet_rpc()
-        await self.init_pps_wallet_rpc()
 
         await self.state_keeper.start(self.node_rpc_client, self.wallet_rpc_client)
         await self.payment_manager.start(self.node_rpc_client, self.wallet_rpc_client, self.store,
-                                         self.state_keeper, self.pps_wallet_rpc_client)
+                                         self.state_keeper)
 
     async def init_node_rpc(self):
         self.node_rpc_client = await FullNodeRpcClient.create(
@@ -88,18 +84,6 @@ class PaymentServer:
         self.log.info(f"Logging in: {res}")
         res = await self.wallet_rpc_client.get_wallet_balance(self.wallet_id)
         self.log.info(f"Obtaining balance: {res}")
-
-    async def init_pps_wallet_rpc(self):
-        self.pps_wallet_rpc_client = await WalletRpcClient.create(
-            self.rpc_hostname, uint16(self.wallet_rpc_port), DEFAULT_ROOT_PATH, self.config
-        )
-        res = await self.pps_wallet_rpc_client.log_in_and_skip(fingerprint=self.pps_wallet_fingerprint)
-        if not res["success"]:
-            raise ValueError(f"Error logging into pps wallet : {res['error']}. "
-                             f"Make sure your config fingerprint is correct.")
-        self.log.info(f"Logging in to pps wallet: {res}")
-        res = await self.pps_wallet_rpc_client.get_wallet_balance(self.wallet_id)
-        self.log.info(f"Obtaining pps wallet balance: {res}")
 
     async def stop(self):
         await self.payment_manager.stop()
