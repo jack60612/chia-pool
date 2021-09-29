@@ -47,6 +47,9 @@ class DefaultPaymentManager(AbstractPaymentManager):
 
         self.default_target_puzzle_hash: bytes32 = bytes32(
             decode_puzzle_hash(self._pool_config["default_target_address"]))
+        self.pps_target_puzzle_hash: bytes32 = bytes32(
+            decode_puzzle_hash(self._pool_config["pps_target_address"]))
+        self.pps_wallet_address = self._pool_config["pps_target_address"]
 
         self.pplns_fee = self._pool_config["pplns_fee"]
         self.pps_fee = self._pool_config["pps_fee"]
@@ -230,10 +233,21 @@ class DefaultPaymentManager(AbstractPaymentManager):
                             # Save transaction to records in DB
                             try:
                                 await self._store.add_block(rec.launcher_id)
-                                await self._store.add_unspent_block(int(peak_height), rec.pps_enabled, 1.75)
                                 self._logger.info(f"Successfully added payments to Database")
                             except Exception as e:
                                 self._logger.error(f"Error adding payouts to database: {e}")
+                            # if it was farmed by a pps farmer then send to pps wallet.
+                            if rec.pps_enabled is True:
+                                self._logger.info(f"Block was won by a pps farmer, sending block to pps wallet.")
+                                try:
+                                    additions_sub_list: List[Dict] = [
+                                        {"puzzle_hash": self.pps_target_puzzle_hash, "amount": 1.75}
+                                    ]
+                                    self._logger.info(f"Will make payment to pps wallet : {additions_sub_list}")
+                                    await self.pending_payments.put(additions_sub_list.copy())
+                                    self._logger.info(f"Successfully added PPS Wallet payments to queue.")
+                                except Exception as e:
+                                    self._logger.error(f"Error sending payments to PPS wallet: {e}")
 
                         else:
                             self._logger.error(f"Error submitting transaction: {push_tx_response}")
