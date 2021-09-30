@@ -119,8 +119,6 @@ class Pool:
         # This is the wallet fingerprint and ID for the wallet spending the funds from `self.default_target_puzzle_hash`
         self.wallet_fingerprint = pool_config["wallet_fingerprint"]
         self.wallet_id = pool_config["wallet_id"]
-        self.pps_wallet_fingerprint = pool_config["pps_wallet_fingerprint"]
-        self.pps_wallet_id = pool_config["pps_wallet_id"]
 
         # We need to check for slow farmers. If farmers cannot submit proofs in time, they won't be able to win
         # any rewards either. This number can be tweaked to be more or less strict. More strict ensures everyone
@@ -153,7 +151,6 @@ class Pool:
         self.node_rpc_client: Optional[FullNodeRpcClient] = None
         self.node_rpc_port = pool_config["node_rpc_port"]
         self.wallet_rpc_client: Optional[WalletRpcClient] = None
-        self.pps_wallet_rpc_client: Optional[WalletRpcClient] = None
         self.wallet_rpc_port = pool_config["wallet_rpc_port"]
 
         self.state_keeper = StateKeeper(self.log, self.wallet_fingerprint)
@@ -170,7 +167,7 @@ class Pool:
             await self.init_wallet_rpc()
             await self.state_keeper.start(self.node_rpc_client, self.wallet_rpc_client)
             await self.payment_manager.start(self.node_rpc_client, self.wallet_rpc_client, self.store,
-                                             self.state_keeper, self.pps_wallet_rpc_client)
+                                             self.state_keeper)
 
         self.confirm_partials_loop_task = asyncio.create_task(self.confirm_partials_loop())
 
@@ -190,18 +187,6 @@ class Pool:
         res = await self.wallet_rpc_client.get_wallet_balance(self.wallet_id)
         self.log.info(f"Obtaining balance: {res}")
 
-    async def init_pps_wallet_rpc(self):
-        self.pps_wallet_rpc_client = await WalletRpcClient.create(
-            self.rpc_hostname, uint16(self.wallet_rpc_port), DEFAULT_ROOT_PATH, self.config
-        )
-        res = await self.pps_wallet_rpc_client.log_in_and_skip(fingerprint=self.pps_wallet_fingerprint)
-        if not res["success"]:
-            raise ValueError(f"Error logging into pps wallet : {res['error']}. "
-                             f"Make sure your config fingerprint is correct.")
-        self.log.info(f"Logging in to pps wallet: {res}")
-        res = await self.pps_wallet_rpc_client.get_wallet_balance(self.pps_wallet_id)
-        self.log.info(f"Obtaining pps wallet balance: {res}")
-
     async def stop(self):
         if self.confirm_partials_loop_task is not None:
             self.confirm_partials_loop_task.cancel()
@@ -210,8 +195,6 @@ class Pool:
         await self.state_keeper.stop()
         self.wallet_rpc_client.close()
         await self.wallet_rpc_client.await_closed()
-        self.pps_wallet_rpc_client.close()
-        await self.pps_wallet_rpc_client.await_closed()
         self.node_rpc_client.close()
         await self.node_rpc_client.await_closed()
         await self.store.close()
