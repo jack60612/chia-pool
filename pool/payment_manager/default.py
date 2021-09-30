@@ -314,7 +314,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
                     # but other blockchain addresses can also be used.
                     points_and_ph: dict[uint64, bytes] = \
                         await self._store.get_farmer_points_and_payout_instructions(self.pplns_n_value)
-                    total_points = sum([points for ph, points in points_and_ph])
+                    total_points = sum({points for ph, points in points_and_ph})
                     if total_points > 0:
                         mojo_per_point = floor(amount_to_distribute / total_points)
                         self._logger.info(f"Paying out {mojo_per_point} mojo / point")
