@@ -28,13 +28,14 @@ class AbstractPaymentManager(ABC):
         # dependencies (like passing a pool object to this class)
         self._node_rpc_client: Optional[FullNodeRpcClient] = None
         self._wallet_rpc_client: Optional[WalletRpcClient] = None
+        self._pps_wallet_rpc_client: Optional[WalletRpcClient] = None
         self._store: Optional[AbstractPoolStore] = None
         self._state_keeper: Optional[StateKeeper] = None
         self._standalone: Optional[bool] = standalone or False
 
     @abstractmethod
     async def start(self, node_rpc_client: FullNodeRpcClient, wallet_rpc_client: WalletRpcClient,
-                    store: AbstractPoolStore, state_keeper: StateKeeper):
+                    store: AbstractPoolStore, state_keeper: StateKeeper, pps_wallet_rpc_client: WalletRpcClient):
         """
         Save connection objects and start the periodic tasks
         """
@@ -42,6 +43,7 @@ class AbstractPaymentManager(ABC):
         self._wallet_rpc_client = wallet_rpc_client
         self._store = store
         self._state_keeper = state_keeper
+        self._pps_wallet_rpc_client = pps_wallet_rpc_client
 
     @abstractmethod
     async def stop(self):
