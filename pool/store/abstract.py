@@ -61,7 +61,7 @@ class AbstractPoolStore(ABC):
         """Fetch Farmers matching given puzzle hashes"""
 
     @abstractmethod
-    async def get_farmer_points_and_payout_instructions(self, pplns_n_value: int) -> Dict[bytes, uint64]:
+    async def get_farmer_points_and_payout_instructions(self, pplns_n_value: int) -> Dict[bytes32, uint64]:
         """Fetch pplns farmers and their respective payout instructions"""
 
     @abstractmethod

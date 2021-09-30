@@ -245,7 +245,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
                                 self._logger.info(f"Block was won by a pps farmer, sending block to pps wallet.")
                                 try:
                                     additions_sub_list: List[Dict] = [
-                                        {"puzzle_hash": self.pps_target_puzzle_hash, "amount": 1.75}
+                                        {"puzzle_hash": self.pps_target_puzzle_hash, "amount": calculate_pool_reward(uint32(self._state_keeper.blockchain_state["peak"]["height"]))}
                                     ]
                                     self._logger.info(f"Will make payment to pps wallet : {additions_sub_list}")
                                     await self.pending_payments.put(additions_sub_list.copy())
@@ -298,7 +298,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
                 pool_coin_amount = int(total_amount_claimed * self.pplns_fee)
                 amount_to_distribute = total_amount_claimed - pool_coin_amount
 
-                if total_amount_claimed < calculate_pool_reward(uint32(1)):  # 1.75 XCH
+                if total_amount_claimed < calculate_pool_reward(uint32(self._state_keeper.blockchain_state["peak"]["height"])):  # 1.75 XCH
                     self._logger.info(f"Do not have enough funds to distribute: {total_amount_claimed}, "
                                       f"skipping payout")
                     await asyncio.sleep(10)
@@ -388,7 +388,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
                 pool_coin_amount = int(total_amount_claimed * self.pps_fee)
                 amount_to_distribute = total_amount_claimed - pool_coin_amount
 
-                if total_amount_claimed < calculate_pool_reward(uint32(1)):  # 1.75 XCH
+                if total_amount_claimed < calculate_pool_reward(uint32(self._state_keeper.blockchain_state["peak"]["height"])):  # 1.75 XCH
                     self._logger.info(f"Do not have enough pps funds to distribute: {total_amount_claimed}, "
                                       f"skipping payout")
                     await asyncio.sleep(10)
