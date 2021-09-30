@@ -8,7 +8,7 @@ from chia.types.blockchain_format.sized_bytes import bytes32
 from chia.types.coin_spend import CoinSpend
 from chia.util.ints import uint64
 
-from ..record import FarmerRecord, PoolBlockRecord
+from ..record import FarmerRecord
 from ..util import RequestMetadata
 
 
