@@ -61,8 +61,6 @@ class DefaultPaymentManager(AbstractPaymentManager):
         # This is the wallet fingerprint and ID for the wallet spending the funds from `self.default_target_puzzle_hash`
         self.wallet_fingerprint = self._pool_config["wallet_fingerprint"]
         self.wallet_id = self._pool_config["wallet_id"]
-        self.pps_wallet_fingerprint = self._pool_config["pps_wallet_fingerprint"]
-        self.pps_wallet_id = self._pool_config["pps_wallet_id"]
 
         # This is the list of payments that we have not sent yet, to farmers
         self.pending_payments: Optional[asyncio.Queue] = None
@@ -508,7 +506,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
         while True:
             try:
                 peak_height = self._state_keeper.blockchain_state["peak"].height
-                await self._wallet_rpc_client.log_in_and_skip(fingerprint=self.pps_wallet_fingerprint)
+                await self._wallet_rpc_client.log_in_and_skip(fingerprint=self.wallet_fingerprint)
                 if not self._state_keeper.blockchain_state["sync"]["synced"] or not self._state_keeper.wallet_synced:
                     self._logger.warning("Waiting for wallet sync")
                     await asyncio.sleep(60)
@@ -525,7 +523,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
                 blockchain_fee: uint64 = uint64(0)
                 try:
                     transaction: TransactionRecord = await self._wallet_rpc_client.send_transaction_multi(
-                        self.pps_wallet_id, payment_targets, fee=blockchain_fee
+                        self.wallet_id, payment_targets, fee=blockchain_fee
                     )
                 except ValueError as e:
                     self._logger.error(f"Error making pps payment: {e}")
@@ -539,7 +537,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
                         not transaction.confirmed
                         or not (peak_height - transaction.confirmed_at_height) > self.confirmation_security_threshold
                 ):
-                    transaction = await self._wallet_rpc_client.get_transaction(self.pps_wallet_id, transaction.name)
+                    transaction = await self._wallet_rpc_client.get_transaction(self.wallet_id, transaction.name)
                     peak_height = self._state_keeper.blockchain_state["peak"].height
                     self._logger.info(
                         f"Waiting for pps transaction to obtain {self.confirmation_security_threshold} confirmations"

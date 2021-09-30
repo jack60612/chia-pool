@@ -15,8 +15,6 @@ wallet_fingerprint: 1718616103
 authentication_token_timeout: 5
 pplns_n_value: 100000
 pps_target_address: txch1mdw5usvgjrhx6e8ja396kyfnwy3jyzaaaf45ft8vcky7nl7d6us54s3hj
-pps_wallet_fingerprint: 4554111
-pps_wallet_id: 2
 wallet_id: 1
 node_rpc_port: 8555
 wallet_rpc_port: 9256
