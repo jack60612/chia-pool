@@ -224,7 +224,7 @@ class MySQLPoolStore(AbstractPoolStore):
             await cursor.close()
             return [self._row_to_farmer_record(row) for row in rows]
 
-    async def get_farmer_points_and_payout_instructions(self, pplns_n_value: int) -> Dict[uint64, bytes]:
+    async def get_farmer_points_and_payout_instructions(self, pplns_n_value: int) -> Dict[bytes, uint64]:
         with (await self.pool) as connection:
             cursor = await connection.cursor()
             await cursor.execute(
@@ -233,7 +233,7 @@ class MySQLPoolStore(AbstractPoolStore):
                 f" ORDER BY pplns_partials.accept_time DESC LIMIT {pplns_n_value} ")
             rows = await cursor.fetchall()
             await cursor.close()
-            ret: dict[uint64, bytes] = {}
+            ret: dict[bytes, uint64] = {}
             for row in rows:
                 if row[1] in ret:
                     ret[row[1]] = ret[row[1]] + row[0]

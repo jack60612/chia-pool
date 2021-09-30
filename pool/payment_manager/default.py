@@ -312,7 +312,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
                 async with self._store.lock:
                     # Get the points of each farmer, as well as payout instructions. Here a chia address is used,
                     # but other blockchain addresses can also be used.
-                    points_and_ph: dict[uint64, bytes] = \
+                    points_and_ph: dict[bytes, uint64] = \
                         await self._store.get_farmer_points_and_payout_instructions(self.pplns_n_value)
                     total_points = sum(points_and_ph.values())
                     if total_points > 0:
@@ -322,7 +322,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
                         additions_sub_list: List[Dict] = [
                             {"puzzle_hash": self.pool_fee_puzzle_hash, "amount": pool_coin_amount}
                         ]
-                        for ph, points in points_and_ph:
+                        for ph, points in points_and_ph.items():
                             if points > 0:
                                 additions_sub_list.append({"puzzle_hash": ph, "amount": points * mojo_per_point})
 
