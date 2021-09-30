@@ -228,9 +228,9 @@ class MySQLPoolStore(AbstractPoolStore):
         with (await self.pool) as connection:
             cursor = await connection.cursor()
             await cursor.execute(
-                f"SELECT pplns_partials.points, farmer.payout_instructions,pplns_partials.accept_time FROM pplns_partials "
-                f"JOIN farmer ON farmer.launcher_id = pplns_partials.launcher_id AND farmer.pps_enabled=0 GROUP BY "
-                f"pplns_partials.launcher_id ORDER BY pplns_partials.accept_time DESC LIMIT {pplns_n_value} ")
+                f"SELECT pplns_partials.points, farmer.payout_instructions, pplns_partials.accept_time FROM pplns_partials "
+                f"JOIN farmer ON farmer.launcher_id = pplns_partials.launcher_id AND farmer.pps_enabled=0"
+                f" ORDER BY pplns_partials.accept_time DESC LIMIT {pplns_n_value} ")
             rows = await cursor.fetchall()
             await cursor.close()
             ret: dict[uint64, bytes] = {}
