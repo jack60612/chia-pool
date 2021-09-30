@@ -81,6 +81,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
     async def start(self, *args, **kwargs):
         await super().start(*args, **kwargs)
         self.pending_payments = asyncio.Queue()
+        self.pps_pending_payments = asyncio.Queue()
         self.scan_p2_singleton_puzzle_hashes = await self._store.get_pay_to_singleton_phs()
 
         if self._standalone is True:
