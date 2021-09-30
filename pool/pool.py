@@ -161,13 +161,14 @@ class Pool:
         if self.wallet_enabled is False:
             self.log.info("Wallet RPC Disabled")
             await self.init_node_rpc()
+            await self.state_keeper.start(self.node_rpc_client, self.wallet_rpc_client)
         else:
             await self.init_node_rpc()
             await self.init_wallet_rpc()
+            await self.state_keeper.start(self.node_rpc_client, self.wallet_rpc_client)
             await self.payment_manager.start(self.node_rpc_client, self.wallet_rpc_client, self.store,
                                              self.state_keeper)
 
-        await self.state_keeper.start(self.node_rpc_client, self.wallet_rpc_client)
         self.confirm_partials_loop_task = asyncio.create_task(self.confirm_partials_loop())
 
     async def init_node_rpc(self):
