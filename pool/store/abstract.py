@@ -61,7 +61,7 @@ class AbstractPoolStore(ABC):
         """Fetch Farmers matching given puzzle hashes"""
 
     @abstractmethod
-    async def get_farmer_points_and_payout_instructions(self, pplns_n_value: int) -> List[Tuple[uint64, bytes]]:
+    async def get_farmer_points_and_payout_instructions(self, pplns_n_value: int) -> dict[uint64, bytes]:
         """Fetch pplns farmers and their respective payout instructions"""
 
     @abstractmethod

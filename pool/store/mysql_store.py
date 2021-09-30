@@ -224,27 +224,21 @@ class MySQLPoolStore(AbstractPoolStore):
             await cursor.close()
             return [self._row_to_farmer_record(row) for row in rows]
 
-    async def get_farmer_points_and_payout_instructions(self, pplns_n_value: int) -> List[Tuple[uint64, bytes]]:
+    async def get_farmer_points_and_payout_instructions(self, pplns_n_value: int) -> dict[uint64, bytes]:
         with (await self.pool) as connection:
             cursor = await connection.cursor()
             await cursor.execute(
-                f"SELECT sum(pplns_partials.points) AS points, farmer.payout_instructions FROM pplns_partials "
+                f"SELECT pplns_partials.points, farmer.payout_instructions,pplns_partials.accept_time FROM pplns_partials "
                 f"JOIN farmer ON farmer.launcher_id = pplns_partials.launcher_id AND farmer.pps_enabled=0 GROUP BY "
                 f"pplns_partials.launcher_id ORDER BY pplns_partials.accept_time DESC LIMIT {pplns_n_value} ")
             rows = await cursor.fetchall()
             await cursor.close()
-            accumulated: Dict[bytes32, uint64] = {}
+            ret: dict[uint64, bytes] = {}
             for row in rows:
-                points: uint64 = uint64(row[0])
-                ph: bytes32 = bytes32(bytes.fromhex(row[1]))
-                if ph in accumulated:
-                    accumulated[ph] += points
+                if row[1] in ret:
+                    ret[row[1]] = ret[row[1]] + row[0]
                 else:
-                    accumulated[ph] = points
-
-            ret: List[Tuple[uint64, bytes32]] = []
-            for ph, total_points in accumulated.items():
-                ret.append((total_points, ph))
+                    ret[row[1]] = row[0]
             return ret
 
     async def get_pps_farmer_points_and_payout_instructions(self, min_points: int) -> List[Tuple[uint64, bytes]]:
