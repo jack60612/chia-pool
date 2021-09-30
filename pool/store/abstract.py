@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from sanic.log import logger
 import asyncio
-from typing import Optional, Set, List, Tuple
+from typing import Optional, Set, List, Tuple, Dict
 
 from chia.pools.pool_wallet_info import PoolState
 from chia.types.blockchain_format.sized_bytes import bytes32
@@ -61,7 +61,7 @@ class AbstractPoolStore(ABC):
         """Fetch Farmers matching given puzzle hashes"""
 
     @abstractmethod
-    async def get_farmer_points_and_payout_instructions(self, pplns_n_value: int) -> dict[uint64, bytes]:
+    async def get_farmer_points_and_payout_instructions(self, pplns_n_value: int) -> Dict[uint64, bytes]:
         """Fetch pplns farmers and their respective payout instructions"""
 
     @abstractmethod

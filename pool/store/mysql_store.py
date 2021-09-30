@@ -224,7 +224,7 @@ class MySQLPoolStore(AbstractPoolStore):
             await cursor.close()
             return [self._row_to_farmer_record(row) for row in rows]
 
-    async def get_farmer_points_and_payout_instructions(self, pplns_n_value: int) -> dict[uint64, bytes]:
+    async def get_farmer_points_and_payout_instructions(self, pplns_n_value: int) -> Dict[uint64, bytes]:
         with (await self.pool) as connection:
             cursor = await connection.cursor()
             await cursor.execute(
