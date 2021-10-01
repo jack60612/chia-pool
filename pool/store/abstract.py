@@ -99,5 +99,5 @@ class AbstractPoolStore(ABC):
     async def get_payment_system(self, launcher_id: bytes32):
         """Get Current payment system status for a launcher_id"""
     @abstractmethod
-    async def add_pool_block(self, block_height: int, pps: bool, amount: float, launcher_id: bytes32):
+    async def add_pool_block(self, transaction_id: bytes32, pps: bool, amount: float, launcher_id: bytes32):
         """Add block that was won by the pool to the db. """

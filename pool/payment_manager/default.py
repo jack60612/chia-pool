@@ -237,6 +237,10 @@ class DefaultPaymentManager(AbstractPaymentManager):
                             # Save transaction to records in DB
                             try:
                                 await self._store.add_block(rec.launcher_id)
+                                await self._store.add_pool_block(spend_bundle.name(),
+                                                                 rec.pps_enabled,
+                                                                 ph_to_amounts[rec.p2_singleton_puzzle_hash],
+                                                                 rec.launcher_id)
                                 self._logger.info(f"Successfully added payments to Database")
                             except Exception as e:
                                 self._logger.error(f"Error adding payouts to database: {e}")

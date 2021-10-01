@@ -102,7 +102,7 @@ class MySQLPoolStore(AbstractPoolStore):
             (
                 "CREATE TABLE IF NOT EXISTS blocks("
                 "timestamp DATETIME(6) PRIMARY KEY,"
-                "block_height bigint,"
+                "transaction_id VARCHAR(256),"
                 "pps bool,"
                 "amount float,"
                 "launcher_id VARCHAR(256))"
@@ -383,11 +383,12 @@ class MySQLPoolStore(AbstractPoolStore):
             result = [True if row[0] == 1 else False, row[1]]
             return result
 
-    async def add_pool_block(self, block_height: int, pps: bool, amount: float, launcher_id: bytes32):
+    async def add_pool_block(self, transaction_id: bytes32, pps: bool, amount: float, launcher_id: bytes32):
         with (await self.pool) as connection:
             cursor = await connection.cursor()
-            await cursor.execute("INSERT INTO blocks(timestamp,block_height,pps,amount,launcher_id)"
-                                 "VALUES(SYSDATE(6),%s,%s,%s,%s)", (block_height, pps, amount, launcher_id.hex()))
+            await cursor.execute("INSERT INTO blocks(timestamp,transaction_id,pps,amount,launcher_id)"
+                                 "VALUES(SYSDATE(6),%s,%s,%s,%s)",
+                                 (transaction_id.hex(), pps, amount, launcher_id.hex()))
             await connection.commit()
             await cursor.close()
 
