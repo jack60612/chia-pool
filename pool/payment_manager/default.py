@@ -128,7 +128,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
             # get mojo per tib.
             price_tib = (xch_daily / netspace_tib)
             self.pps_share_price = price_tib / 100  # price per share in mojo
-            self._logger.info(f"Updated Price Per share to {price_tib * 1000000000000} XCH per TiB")
+            self._logger.info(f"Updated Price Per share to {price_tib / 1000000000000} XCH per TiB")
             await asyncio.sleep(240)
 
     async def collect_pool_rewards_loop(self):
