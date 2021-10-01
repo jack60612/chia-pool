@@ -84,7 +84,7 @@ class AbstractPoolStore(ABC):
         """Fetch last ``count`` partials for Farmer identified by ``launcher_id``"""
 
     @abstractmethod
-    async def add_payouts(self, block_confirmed: int, payment_targets: List, transaction_id: bytes32) -> None:
+    async def add_payouts(self, block_confirmed: int, payment_targets: List[Dict], transaction_id: bytes32) -> None:
         """Add new payout records for given Farmer & Register Payouts to farmers in DB"""
 
     @abstractmethod

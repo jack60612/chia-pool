@@ -333,11 +333,11 @@ class MySQLPoolStore(AbstractPoolStore):
                                                 rows]
             return ret
 
-    async def add_payouts(self, block_confirmed: int, payment_targets: List, transaction_id: bytes32) -> None:
+    async def add_payouts(self, block_confirmed: int, payment_targets: List[Dict], transaction_id: bytes32) -> None:
         with (await self.pool) as connection:
-            for index in range(len(payment_targets)):
-                payout_instructions = payment_targets[index]["puzzle_hash"]
-                payout = payment_targets[index]["amount"]
+            for payment_target in payment_targets:
+                payout_instructions = payment_target["puzzle_hash"]
+                payout = payment_target["amount"]
                 cursor = await connection.cursor()
                 await cursor.execute(f"SELECT launcher_id from farmer where payout_instructions=%s",
                                      (payout_instructions.hex()), )
