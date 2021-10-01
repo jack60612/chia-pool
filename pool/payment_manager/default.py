@@ -245,7 +245,8 @@ class DefaultPaymentManager(AbstractPaymentManager):
                                 self._logger.info(f"Block was won by a pps farmer, sending block to pps wallet.")
                                 try:
                                     additions_sub_list: List[Dict] = [
-                                        {"puzzle_hash": self.pps_target_puzzle_hash, "amount": calculate_pool_reward(uint32(1))}
+                                        {"puzzle_hash": self.pps_target_puzzle_hash, "amount":
+                                            ph_to_amounts[rec.p2_singleton_puzzle_hash]}
                                     ]
                                     self._logger.info(f"Will make payment to pps wallet : {additions_sub_list}")
                                     await self.pending_payments.put(additions_sub_list.copy())
