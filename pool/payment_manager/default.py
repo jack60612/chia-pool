@@ -493,8 +493,10 @@ class DefaultPaymentManager(AbstractPaymentManager):
                 self._logger.info(f"Successfully confirmed payments {payment_targets}")
                 # add payouts to db
                 try:
+                    self._logger.info(f"Sending payouts to db: Height:{transaction.confirmed_at_height}"
+                                      f" Targets: {payment_targets}, Transaction_ID: {transaction.name}")
                     await self._store.add_payouts(transaction.confirmed_at_height, payment_targets, transaction.name)
-                    self._logger.info(f"Successfully added payments to Database")
+                    self._logger.info(f"Successfully added payouts to Database")
                 except Exception as e:
                     self._logger.error(f"Error adding payouts to database: {e}")
 

@@ -340,7 +340,7 @@ class MySQLPoolStore(AbstractPoolStore):
                 payout = payment_target["amount"]
                 cursor = await connection.cursor()
                 await cursor.execute(f"SELECT launcher_id from farmer where payout_instructions=%s",
-                                     (payout_instructions.hex()), )
+                                     (payout_instructions.hex()))
                 row = await cursor.fetchone()
                 launcher_id = row[0]
                 await cursor.close()
