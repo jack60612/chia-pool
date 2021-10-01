@@ -123,14 +123,12 @@ class DefaultPaymentManager(AbstractPaymentManager):
                 await asyncio.sleep(60)
             # convert bytes to TiB from network stats
             netspace_tib = self._state_keeper.blockchain_state["space"] / 1.1e+12  # scientific notation
-            # get xch a day.
+            # get mojo a day.
             xch_daily = 4608 * calculate_pool_reward(uint32(1))
-            # get xch per tib.
+            # get mojo per tib.
             price_tib = (xch_daily / netspace_tib)
-            price_point = price_tib / 100
-            # xch per share to mojo per share which is then used for payouts
-            self.pps_share_price = price_point / 0.000000000001
-            self._logger.info(f"Updated Price Per share to {price_tib} XCH per TiB or {price_point} XCH per point")
+            self.pps_share_price = price_tib / 100  # price per share in mojo
+            self._logger.info(f"Updated Price Per share to {price_tib * 1000000000000} XCH per TiB")
             await asyncio.sleep(240)
 
     async def collect_pool_rewards_loop(self):
