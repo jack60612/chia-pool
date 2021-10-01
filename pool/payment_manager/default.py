@@ -123,11 +123,11 @@ class DefaultPaymentManager(AbstractPaymentManager):
                 await asyncio.sleep(60)
             # convert bytes to TiB from network stats
             netspace_tib = self._state_keeper.blockchain_state["space"] / 1.1e+12  # scientific notation
-            # there are 4608 blocks in a day but farmer gets 0.25 so it should be divided by 4032.
-            # & each TiB gives 100 points a day.
-            chia_share_price = (4032 / netspace_tib) / 100  # how much is earned for each Tib divided by 100 to get
-            # xch per share
-            # mojo per share which is then used for payouts
+            # get xch a day.
+            xch_daily = 4608 * calculate_pool_reward(uint32(1))
+            # get xch per tib which is then converted to xch per point.
+            chia_share_price = (xch_daily / netspace_tib) / 100
+            # xch per share to mojo per share which is then used for payouts
             self.pps_share_price = chia_share_price / 0.000000000001
             self._logger.info(f"Updated Price per share to {chia_share_price} chia")
             await asyncio.sleep(240)
@@ -241,9 +241,9 @@ class DefaultPaymentManager(AbstractPaymentManager):
                                                                  rec.pps_enabled,
                                                                  ph_to_amounts[rec.p2_singleton_puzzle_hash],
                                                                  rec.launcher_id)
-                                self._logger.info(f"Successfully added payments to Database")
+                                self._logger.info(f"Successfully added block to Database")
                             except Exception as e:
-                                self._logger.error(f"Error adding payouts to database: {e}")
+                                self._logger.error(f"Error adding block to database: {e}")
                             # if it was farmed by a pps farmer then send to pps wallet.
                             if rec.pps_enabled is True:
                                 self._logger.info(f"Block was won by a pps farmer, sending block to pps wallet.")

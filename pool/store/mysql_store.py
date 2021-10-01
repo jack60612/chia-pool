@@ -340,7 +340,7 @@ class MySQLPoolStore(AbstractPoolStore):
                 payout = payment_targets[index]["amount"]
                 cursor = await connection.cursor()
                 await cursor.execute(f"SELECT launcher_id from farmer where payout_instructions=%s",
-                                     (payout_instructions), )
+                                     (payout_instructions.hex()), )
                 row = await cursor.fetchone()
                 launcher_id = row[0]
                 await cursor.close()
@@ -349,7 +349,7 @@ class MySQLPoolStore(AbstractPoolStore):
                     f"INSERT INTO payments(payout_time,block_height,transaction_id,launcher_id,payout_instructions,"
                     f"payout) "
                     f"VALUES(SYSDATE(6),%s,%s,%s,%s,%s)",
-                    (block_confirmed, transaction_id, launcher_id.hex(), payout_instructions, payout)
+                    (block_confirmed, transaction_id.hex(), launcher_id.hex(), payout_instructions.hex(), payout)
                 )
                 await connection.commit()
                 await cursor.close()
