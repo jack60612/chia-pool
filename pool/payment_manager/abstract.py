@@ -1,3 +1,4 @@
+import asyncio
 from abc import ABC, abstractmethod
 from typing import Optional
 
@@ -31,6 +32,7 @@ class AbstractPaymentManager(ABC):
         self._store: Optional[AbstractPoolStore] = None
         self._state_keeper: Optional[StateKeeper] = None
         self._standalone: Optional[bool] = standalone or False
+        self._wallet_lock = asyncio.Lock()
 
     @abstractmethod
     async def start(self, node_rpc_client: FullNodeRpcClient, wallet_rpc_client: WalletRpcClient,

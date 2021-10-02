@@ -452,53 +452,54 @@ class DefaultPaymentManager(AbstractPaymentManager):
                     self._logger.warning("Waiting for wallet sync")
                     await asyncio.sleep(60)
                     continue
+                async with self._wallet_lock:
+                    payment_targets = await self.pending_payments.get()
+                    assert len(payment_targets) > 0
 
-                payment_targets = await self.pending_payments.get()
-                assert len(payment_targets) > 0
+                    self._logger.info(f"Submitting a payment: {payment_targets}")
 
-                self._logger.info(f"Submitting a payment: {payment_targets}")
+                    # TODO(pool): make sure you have enough to pay the blockchain fee, this will be taken out of the
+                    # pool fee itself. Alternatively you can set it to 0 and wait longer
+                    # blockchain_fee = 0.00001 * (10 ** 12) * len(payment_targets)
+                    blockchain_fee: uint64 = uint64(0)
+                    try:
+                        transaction: TransactionRecord = await self._wallet_rpc_client.send_transaction_multi(
+                            self.wallet_id, payment_targets, fee=blockchain_fee
+                        )
+                    except ValueError as e:
+                        self._logger.error(f"Error making payment: {e}")
+                        await asyncio.sleep(10)
+                        await self.pending_payments.put(payment_targets)
+                        continue
 
-                # TODO(pool): make sure you have enough to pay the blockchain fee, this will be taken out of the pool
-                # fee itself. Alternatively you can set it to 0 and wait longer
-                # blockchain_fee = 0.00001 * (10 ** 12) * len(payment_targets)
-                blockchain_fee: uint64 = uint64(0)
-                try:
-                    transaction: TransactionRecord = await self._wallet_rpc_client.send_transaction_multi(
-                        self.wallet_id, payment_targets, fee=blockchain_fee
-                    )
-                except ValueError as e:
-                    self._logger.error(f"Error making payment: {e}")
-                    await asyncio.sleep(10)
-                    await self.pending_payments.put(payment_targets)
-                    continue
+                    self._logger.info(f"Transaction: {transaction}")
 
-                self._logger.info(f"Transaction: {transaction}")
+                    while (
+                            not transaction.confirmed
+                            or not (peak_height - transaction.confirmed_at_height) > self.confirmation_security_threshold
+                    ):
+                        transaction = await self._wallet_rpc_client.get_transaction(self.wallet_id, transaction.name)
+                        peak_height = self._state_keeper.blockchain_state["peak"].height
+                        self._logger.info(
+                            f"Waiting for transaction to obtain {self.confirmation_security_threshold} confirmations"
+                        )
+                        if not transaction.confirmed:
+                            self._logger.info(f"Not confirmed. In mempool? {transaction.is_in_mempool()}")
+                        else:
+                            self._logger.info(f"Confirmations: {peak_height - transaction.confirmed_at_height}")
+                        await asyncio.sleep(10)
 
-                while (
-                        not transaction.confirmed
-                        or not (peak_height - transaction.confirmed_at_height) > self.confirmation_security_threshold
-                ):
-                    transaction = await self._wallet_rpc_client.get_transaction(self.wallet_id, transaction.name)
-                    peak_height = self._state_keeper.blockchain_state["peak"].height
-                    self._logger.info(
-                        f"Waiting for transaction to obtain {self.confirmation_security_threshold} confirmations"
-                    )
-                    if not transaction.confirmed:
-                        self._logger.info(f"Not confirmed. In mempool? {transaction.is_in_mempool()}")
-                    else:
-                        self._logger.info(f"Confirmations: {peak_height - transaction.confirmed_at_height}")
-                    await asyncio.sleep(10)
-
-                # TODO(pool): persist in DB
-                self._logger.info(f"Successfully confirmed payments {payment_targets}")
-                # add payouts to db
-                try:
-                    self._logger.info(f"Sending payouts to db: Height:{transaction.confirmed_at_height}"
-                                      f" Targets: {payment_targets}, Transaction_ID: {transaction.name}")
-                    await self._store.add_payouts(transaction.confirmed_at_height, payment_targets, transaction.name)
-                    self._logger.info(f"Successfully added payouts to Database")
-                except Exception as e:
-                    self._logger.error(f"Error adding payouts to database: {e}")
+                    # TODO(pool): persist in DB
+                    self._logger.info(f"Successfully confirmed payments {payment_targets}")
+                    # add payouts to db
+                    try:
+                        self._logger.info(f"Sending payouts to db: Height:{transaction.confirmed_at_height}"
+                                          f" Targets: {payment_targets}, Transaction_ID: {transaction.name}")
+                        await self._store.add_payouts(transaction.confirmed_at_height, payment_targets,
+                                                      transaction.name)
+                        self._logger.info(f"Successfully added payouts to Database")
+                    except Exception as e:
+                        self._logger.error(f"Error adding payouts to database: {e}")
 
             except asyncio.CancelledError:
                 self._logger.info("Cancelled submit_payment_loop, closing")
@@ -518,49 +519,50 @@ class DefaultPaymentManager(AbstractPaymentManager):
                     await asyncio.sleep(60)
                     continue
 
-                payment_targets = await self.pps_pending_payments.get()
-                assert len(payment_targets) > 0
+                async with self._wallet_lock:
+                    payment_targets = await self.pps_pending_payments.get()
+                    assert len(payment_targets) > 0
 
-                self._logger.info(f"Submitting a pps payment: {payment_targets}")
+                    self._logger.info(f"Submitting a pps payment: {payment_targets}")
 
-                # TODO(pool): make sure you have enough to pay the blockchain fee, this will be taken out of the pool
-                # fee itself. Alternatively you can set it to 0 and wait longer
-                # blockchain_fee = 0.00001 * (10 ** 12) * len(payment_targets)
-                blockchain_fee: uint64 = uint64(0)
-                try:
-                    transaction: TransactionRecord = await self._wallet_rpc_client.send_transaction_multi(
-                        self.wallet_id, payment_targets, fee=blockchain_fee
-                    )
-                except ValueError as e:
-                    self._logger.error(f"Error making pps payment: {e}")
-                    await asyncio.sleep(10)
-                    await self.pps_pending_payments.put(payment_targets)
-                    continue
+                    # TODO(pool): make sure you have enough to pay the blockchain fee, this will be taken out of the
+                    # pool fee itself. Alternatively you can set it to 0 and wait longer
+                    # blockchain_fee = 0.00001 * (10 ** 12) * len(payment_targets)
+                    blockchain_fee: uint64 = uint64(0)
+                    try:
+                        transaction: TransactionRecord = await self._wallet_rpc_client.send_transaction_multi(
+                            self.wallet_id, payment_targets, fee=blockchain_fee
+                        )
+                    except ValueError as e:
+                        self._logger.error(f"Error making pps payment: {e}")
+                        await asyncio.sleep(10)
+                        await self.pps_pending_payments.put(payment_targets)
+                        continue
 
-                self._logger.info(f"pps Transaction: {transaction}")
+                    self._logger.info(f"pps Transaction: {transaction}")
 
-                while (
-                        not transaction.confirmed
-                        or not (peak_height - transaction.confirmed_at_height) > self.confirmation_security_threshold
-                ):
-                    transaction = await self._wallet_rpc_client.get_transaction(self.wallet_id, transaction.name)
-                    peak_height = self._state_keeper.blockchain_state["peak"].height
-                    self._logger.info(
-                        f"Waiting for pps transaction to obtain {self.confirmation_security_threshold} confirmations"
-                    )
-                    if not transaction.confirmed:
-                        self._logger.info(f"Not confirmed. In mempool? {transaction.is_in_mempool()}")
-                    else:
-                        self._logger.info(f"Confirmations: {peak_height - transaction.confirmed_at_height}")
-                    await asyncio.sleep(10)
+                    while (
+                            not transaction.confirmed
+                            or not (peak_height - transaction.confirmed_at_height) > self.confirmation_security_threshold
+                    ):
+                        transaction = await self._wallet_rpc_client.get_transaction(self.wallet_id, transaction.name)
+                        peak_height = self._state_keeper.blockchain_state["peak"].height
+                        self._logger.info(
+                            f"Waiting for pps transaction to obtain {self.confirmation_security_threshold} confirmations"
+                        )
+                        if not transaction.confirmed:
+                            self._logger.info(f"Not confirmed. In mempool? {transaction.is_in_mempool()}")
+                        else:
+                            self._logger.info(f"Confirmations: {peak_height - transaction.confirmed_at_height}")
+                        await asyncio.sleep(10)
 
-                self._logger.info(f"Successfully confirmed pps payments {payment_targets}")
-                # add payouts to db
-                try:
-                    await self._store.add_payouts(transaction.confirmed_at_height, payment_targets, transaction.name)
-                    self._logger.info(f"Successfully added pps payments to Database")
-                except Exception as e:
-                    self._logger.error(f"Error adding pps payouts to database: {e}")
+                    self._logger.info(f"Successfully confirmed pps payments {payment_targets}")
+                    # add payouts to db
+                    try:
+                        await self._store.add_payouts(transaction.confirmed_at_height, payment_targets, transaction.name)
+                        self._logger.info(f"Successfully added pps payments to Database")
+                    except Exception as e:
+                        self._logger.error(f"Error adding pps payouts to database: {e}")
 
             except asyncio.CancelledError:
                 self._logger.info("Cancelled pps_submit_payment_loop, closing")
