@@ -338,7 +338,7 @@ class MySQLPoolStore(AbstractPoolStore):
         with (await self.pool) as connection:
             for payment_target in payment_targets:
                 payout_instructions = payment_target["puzzle_hash"].hex()
-                payout = payment_target["amount"]
+                payout: float = payment_target["amount"] / 1000000000000  # convert from mojo to chia
                 cursor = await connection.cursor()
 
                 await cursor.execute(f"SELECT launcher_id from farmer where payout_instructions=%s",

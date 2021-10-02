@@ -452,12 +452,13 @@ class DefaultPaymentManager(AbstractPaymentManager):
                     self._logger.warning("Waiting for wallet sync")
                     await asyncio.sleep(60)
                     continue
+
+                payment_targets = await self.pending_payments.get()
+                assert len(payment_targets) > 0
+
                 async with self._wallet_lock:
-                    payment_targets = await self.pending_payments.get()
-                    assert len(payment_targets) > 0
 
                     self._logger.info(f"Submitting a payment: {payment_targets}")
-
                     # TODO(pool): make sure you have enough to pay the blockchain fee, this will be taken out of the
                     # pool fee itself. Alternatively you can set it to 0 and wait longer
                     # blockchain_fee = 0.00001 * (10 ** 12) * len(payment_targets)
@@ -519,9 +520,10 @@ class DefaultPaymentManager(AbstractPaymentManager):
                     await asyncio.sleep(60)
                     continue
 
+                payment_targets = await self.pps_pending_payments.get()
+                assert len(payment_targets) > 0
+
                 async with self._wallet_lock:
-                    payment_targets = await self.pps_pending_payments.get()
-                    assert len(payment_targets) > 0
 
                     self._logger.info(f"Submitting a pps payment: {payment_targets}")
 
