@@ -9,13 +9,14 @@ from blspy import G1Element
 from chia.pools.pool_wallet_info import PoolState
 from chia.types.blockchain_format.sized_bytes import bytes32
 from chia.types.coin_spend import CoinSpend
-from chia.util.ints import uint64
+from chia.util.ints import uint64, uint32
 
 from .abstract import AbstractPoolStore
 from ..record import FarmerRecord
 from ..util import RequestMetadata
 
 pymysql.converters.encoders[uint64] = pymysql.converters.escape_int
+pymysql.converters.encoders[uint32] = pymysql.converters.escape_int
 pymysql.converters.conversions = pymysql.converters.encoders.copy()
 pymysql.converters.conversions.update(pymysql.converters.decoders)
 
