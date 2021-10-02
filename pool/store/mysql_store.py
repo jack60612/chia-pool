@@ -339,11 +339,14 @@ class MySQLPoolStore(AbstractPoolStore):
                 payout_instructions = payment_target["puzzle_hash"].hex()
                 payout = payment_target["amount"]
                 cursor = await connection.cursor()
+
                 await cursor.execute(f"SELECT launcher_id from farmer where payout_instructions=%s",
                                      (payout_instructions))
                 row = await cursor.fetchone()
                 launcher_id = row[0]
                 await cursor.close()
+                if launcher_id is None:  # launcher_id not in db. Probably just the fee address.
+                    continue
                 cursor = await connection.cursor()
                 await cursor.execute(
                     f"INSERT INTO payments(payout_time,block_height,transaction_id,launcher_id,payout_instructions,"
