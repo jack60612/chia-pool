@@ -343,23 +343,25 @@ class MySQLPoolStore(AbstractPoolStore):
                 await cursor.execute(f"SELECT launcher_id from farmer where payout_instructions=%s",
                                      (payout_instructions))
                 row = await cursor.fetchone()
-                launcher_id = row[0]
+
                 await cursor.close()
-                if launcher_id is None:  # launcher_id not in db. Probably just the fee address.
-                    continue
-                cursor = await connection.cursor()
-                await cursor.execute(
-                    f"INSERT INTO payments(payout_time,block_height,transaction_id,launcher_id,payout_instructions,"
-                    f"payout) "
-                    f"VALUES(SYSDATE(6),%s,%s,%s,%s,%s)",
-                    (block_confirmed, transaction_id.hex(), launcher_id, payout_instructions, payout)
-                )
-                await connection.commit()
-                await cursor.close()
-                cursor = await connection.cursor()
-                await cursor.execute(f"UPDATE farmer set xch_paid=xch_paid+%s where launcher_id=%s",
-                                     (payout, launcher_id))
-                await connection.commit()
+                if row is not None:  # launcher_id not in db. Probably just the fee address.
+                    launcher_id = row[0]
+                    cursor = await connection.cursor()
+
+                    await cursor.execute(
+                        f"INSERT INTO payments(payout_time,block_height,transaction_id,launcher_id,payout_instructions,"
+                        f"payout) "
+                        f"VALUES(SYSDATE(6),%s,%s,%s,%s,%s)",
+                        (block_confirmed, transaction_id.hex(), launcher_id, payout_instructions, payout)
+                    )
+                    await connection.commit()
+                    await cursor.close()
+                    cursor = await connection.cursor()
+                    await cursor.execute(f"UPDATE farmer set xch_paid=xch_paid+%s where launcher_id=%s",
+                                         (payout, launcher_id))
+                    await connection.commit()
+
 
     async def add_block(self, launcher_id: bytes32) -> None:
         with (await self.pool) as connection:
