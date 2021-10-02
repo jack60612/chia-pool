@@ -336,7 +336,7 @@ class MySQLPoolStore(AbstractPoolStore):
     async def add_payouts(self, block_confirmed: int, payment_targets: List[Dict], transaction_id: bytes32) -> None:
         with (await self.pool) as connection:
             for payment_target in payment_targets:
-                payout_instructions = payment_target["puzzle_hash"]
+                payout_instructions = payment_target["puzzle_hash"].hex()
                 payout = payment_target["amount"]
                 cursor = await connection.cursor()
                 await cursor.execute(f"SELECT launcher_id from farmer where payout_instructions=%s",
