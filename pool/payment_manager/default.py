@@ -261,7 +261,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
                         {"puzzle_hash": self.pps_target_puzzle_hash, "amount": pps_payment_amount}]
                     self._logger.info(f"Will make payments to pps wallet : {additions_sub_list}")
                     await self.send_to_pps.put(additions_sub_list.copy())
-                    self._logger.info(f"Successfully added PPS Wallet payments to queue.")
+                    self._logger.info(f"Successfully added PPS Wallet payment to queue.")
 
                 await asyncio.sleep(self.collect_pool_rewards_interval)
             except asyncio.CancelledError:
