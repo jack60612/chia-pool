@@ -65,6 +65,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
         # This is the list of payments that we have not sent yet, to farmers
         self.pending_payments: Optional[asyncio.Queue] = None
         self.pps_pending_payments: Optional[asyncio.Queue] = None
+        self.send_to_pps: Optional[asyncio.Queue] = None
 
         self.scan_p2_singleton_puzzle_hashes: Set[bytes32] = set()
 
@@ -80,6 +81,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
         await super().start(*args, **kwargs)
         self.pending_payments = asyncio.Queue()
         self.pps_pending_payments = asyncio.Queue()
+        self.send_to_pps = asyncio.Queue()
         self.scan_p2_singleton_puzzle_hashes = await self._store.get_pay_to_singleton_phs()
 
         if self._standalone is True:
@@ -197,6 +199,8 @@ class DefaultPaymentManager(AbstractPaymentManager):
                     self._logger.info(f"Not claimable amount: {not_claimable_amounts / (10 ** 12)}")
                     self._logger.info(f"Not buried amounts: {not_buried_amounts / (10 ** 12)}")
 
+                pps_payment_amount: int = 0
+
                 for rec in farmer_records:
                     if rec.is_pool_member:
                         singleton_tip: Optional[Coin] = get_most_recent_singleton_coin_from_coin_spend(
@@ -246,20 +250,19 @@ class DefaultPaymentManager(AbstractPaymentManager):
                                 self._logger.error(f"Error adding block to database: {e}")
                             # if it was farmed by a pps farmer then send to pps wallet.
                             if rec.pps_enabled is True:
-                                self._logger.info(f"Block was won by a pps farmer, sending block to pps wallet.")
-                                try:
-                                    additions_sub_list: List[Dict] = [
-                                        {"puzzle_hash": self.pps_target_puzzle_hash, "amount":
-                                            ph_to_amounts[rec.p2_singleton_puzzle_hash]}
-                                    ]
-                                    self._logger.info(f"Will make payment to pps wallet : {additions_sub_list}")
-                                    await self.pending_payments.put(additions_sub_list.copy())
-                                    self._logger.info(f"Successfully added PPS Wallet payments to queue.")
-                                except Exception as e:
-                                    self._logger.error(f"Error sending payments to PPS wallet: {e}")
+                                self._logger.info(f"Block was won by a pps farmer, adding amount to transaction.")
+                                pps_payment_amount += ph_to_amounts[rec.p2_singleton_puzzle_hash]
+                                self._logger.info(f"Added PPS Wallet payment amount.")
 
                         else:
                             self._logger.error(f"Error submitting transaction: {push_tx_response}")
+                if pps_payment_amount != 0:
+                    additions_sub_list: List[Dict] = [
+                        {"puzzle_hash": self.pps_target_puzzle_hash, "amount": pps_payment_amount}]
+                    self._logger.info(f"Will make payments to pps wallet : {additions_sub_list}")
+                    await self.send_to_pps.put(additions_sub_list.copy())
+                    self._logger.info(f"Successfully added PPS Wallet payments to queue.")
+
                 await asyncio.sleep(self.collect_pool_rewards_interval)
             except asyncio.CancelledError:
                 self._logger.info("Cancelled collect_pool_rewards_loop, closing")
