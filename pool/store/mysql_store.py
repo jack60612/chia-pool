@@ -95,6 +95,7 @@ class MySQLPoolStore(AbstractPoolStore):
                 "launcher_id VARCHAR(256),"
                 "payout_instructions VARCHAR(256),"
                 "payout float,"
+                "pps bool,"
                 "index (launcher_id))"
 
             )
@@ -336,7 +337,8 @@ class MySQLPoolStore(AbstractPoolStore):
                                                 rows]
             return ret
 
-    async def add_payouts(self, block_confirmed: int, payment_targets: List[Dict], transaction_id: bytes32) -> None:
+    async def add_payouts(self, block_confirmed: int, payment_targets: List[Dict], transaction_id: bytes32,
+                          pps: int) -> None:
         with (await self.pool) as connection:
             for payment_target in payment_targets:
                 payout_instructions = payment_target["puzzle_hash"].hex()
@@ -354,9 +356,9 @@ class MySQLPoolStore(AbstractPoolStore):
 
                     await cursor.execute(
                         f"INSERT INTO payments(payout_time,block_height,transaction_id,launcher_id,payout_instructions,"
-                        f"payout) "
+                        f"payout,pps) "
                         f"VALUES(SYSDATE(6),%s,%s,%s,%s,%s)",
-                        (block_confirmed, transaction_id.hex(), launcher_id, payout_instructions, payout)
+                        (block_confirmed, transaction_id.hex(), launcher_id, payout_instructions, payout, pps)
                     )
                     await connection.commit()
                     await cursor.close()
