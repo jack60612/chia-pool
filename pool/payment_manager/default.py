@@ -430,7 +430,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
                         ]
                         for points, ph in points_and_ph:
                             if points > 0:
-                                additions_sub_list.append({"puzzle_hash": ph, "amount": points * mojo_per_point})
+                                additions_sub_list.append({"puzzle_hash": ph, "amount": int(points * mojo_per_point)})
 
                             if len(additions_sub_list) == self.max_additions_per_transaction:
                                 await self.pps_pending_payments.put(additions_sub_list.copy())

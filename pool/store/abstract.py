@@ -68,7 +68,7 @@ class AbstractPoolStore(ABC):
     async def clear_pps_points(self, min_points: int) -> None:
         """Reset all PPS Farmers' points to 0 that are above the set limit"""
     @abstractmethod
-    async def get_pps_farmer_points_and_payout_instructions(self, min_points: int) -> List[Tuple[uint64, bytes]]:
+    async def get_pps_farmer_points_and_payout_instructions(self, min_points: int) -> List[Tuple[uint64, bytes32]]:
         """Fetch pps farmers and their respective payout instructions that are above the set points limit"""
 
     @abstractmethod

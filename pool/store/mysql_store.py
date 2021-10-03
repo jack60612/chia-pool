@@ -255,14 +255,10 @@ class MySQLPoolStore(AbstractPoolStore):
                     res[ph] = points
             return res
 
-    async def get_pps_farmer_points_and_payout_instructions(self, min_points: int) -> List[Tuple[uint64, bytes]]:
+    async def get_pps_farmer_points_and_payout_instructions(self, min_points: int) -> List[Tuple[uint64, bytes32]]:
         with (await self.pool) as connection:
             cursor = await connection.cursor()
-            await cursor.execute(
-                f"SELECT sum(pplns_partials.points) AS points,farmer.payout_instructions FROM pplns_partials,farmer "
-                f"JOIN farmer ON farmer.launcher_id = pplns_partials.launcher_id AND farmer.pps_enabled=1 AND "
-                f"farmer.points>=%s GROUP BY "
-                f"pplns_partials.launcher_id", (min_points))
+            await cursor.execute(f"SELECT points, payout_instructions FROM farmer WHERE points>=%s",(min_points))
             rows = await cursor.fetchall()
             await cursor.close()
             accumulated: Dict[bytes32, uint64] = {}
