@@ -287,12 +287,12 @@ class DefaultPaymentManager(AbstractPaymentManager):
                     continue
 
                 self._logger.info("Starting to create payment")
-
-                coin_records: List[CoinRecord] = await self._node_rpc_client.get_coin_records_by_puzzle_hash(
-                    self.default_target_puzzle_hash,
-                    include_spent_coins=False,
-                    start_height=self.scan_start_height,
-                )
+                async with self._wallet_lock:
+                    coin_records: List[CoinRecord] = await self._node_rpc_client.get_coin_records_by_puzzle_hash(
+                        self.default_target_puzzle_hash,
+                        include_spent_coins=False,
+                        start_height=self.scan_start_height,
+                    )
 
                 if len(coin_records) == 0:
                     self._logger.info("No PPLNS funds to distribute.")
@@ -339,9 +339,6 @@ class DefaultPaymentManager(AbstractPaymentManager):
                             self._logger.info(f"Will make payments: {additions_sub_list}")
                             await self.pending_payments.put(additions_sub_list.copy())
 
-                        # Subtract the points from each farmer
-                        # removed and migrated to pplns payment system
-                        # await self._store.clear_farmer_points()
                     else:
                         self._logger.info(f"No points for any farmer. Waiting {self.payment_interval}")
 
