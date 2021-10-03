@@ -257,8 +257,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
                         else:
                             self._logger.error(f"Error submitting transaction: {push_tx_response}")
                 if pps_payment_amount != 0:
-                    additions_sub_list: List[Dict] = [
-                        {"puzzle_hash": self.pps_target_puzzle_hash, "amount": pps_payment_amount}]
+                    additions_sub_list: Dict = {"puzzle_hash": self.pps_target_puzzle_hash, "amount": pps_payment_amount}
                     self._logger.info(f"Will make payments to pps wallet : {additions_sub_list}")
                     await self.send_to_pps.put(additions_sub_list.copy())
                     self._logger.info(f"Successfully added PPS Wallet payment to queue.")
@@ -305,6 +304,18 @@ class DefaultPaymentManager(AbstractPaymentManager):
                 total_amount_claimed = sum([c.coin.amount for c in coin_records])
                 pool_coin_amount = int(total_amount_claimed * self.pplns_fee)
                 amount_to_distribute = total_amount_claimed - pool_coin_amount
+
+                if self.send_to_pps.empty() is False:  # if queue has transactions pay them first.
+                    pps_payment: Dict = await self.send_to_pps.get()
+                    if total_amount_claimed >= pps_payment["amount"]:  # check if there is enough chia.
+                        await self.pending_payments.put([pps_payment])  # add to main pplns queue
+                    else:
+                        await self.send_to_pps.put(pps_payment)  # put back if we dont have enough chia.
+                        self._logger.info(
+                            f"Do not have enough funds to distribute: {total_amount_claimed / (10 ** 12)}, "
+                            f"skipping payout")
+                        await asyncio.sleep(10)
+                    continue  # restart loop.
 
                 if total_amount_claimed < calculate_pool_reward(uint32(1)):  # 1.75 XCH
                     self._logger.info(f"Do not have enough funds to distribute: {total_amount_claimed / (10 ** 12)}, "
