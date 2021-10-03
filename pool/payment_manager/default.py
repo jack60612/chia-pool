@@ -238,7 +238,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
                                 await self._store.add_block(rec.launcher_id)
                                 await self._store.add_pool_block(spend_bundle.name(),
                                                                  rec.pps_enabled,
-                                                                 ph_to_amounts[rec.p2_singleton_puzzle_hash],
+                                                                 ph_to_amounts[rec.p2_singleton_puzzle_hash] / 1000000000000,
                                                                  rec.launcher_id)
                                 self._logger.info(f"Successfully added block to Database")
                             except Exception as e:
@@ -303,7 +303,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
                 amount_to_distribute = total_amount_claimed - pool_coin_amount
 
                 if total_amount_claimed < calculate_pool_reward(uint32(1)):  # 1.75 XCH
-                    self._logger.info(f"Do not have enough funds to distribute: {total_amount_claimed}, "
+                    self._logger.info(f"Do not have enough funds to distribute: {total_amount_claimed / (10 ** 12)}, "
                                       f"skipping payout")
                     await asyncio.sleep(10)
                     continue
@@ -393,8 +393,8 @@ class DefaultPaymentManager(AbstractPaymentManager):
                 amount_to_distribute = total_amount_claimed - pool_coin_amount
 
                 if total_amount_claimed < calculate_pool_reward(uint32(1)):  # 1.75 XCH
-                    self._logger.info(f"Do not have enough pps funds to distribute: {total_amount_claimed}, "
-                                      f"skipping payout")
+                    self._logger.info(f"Do not have enough pps funds to distribute: {total_amount_claimed / (10 ** 12)}"
+                                      f", skipping payout")
                     await asyncio.sleep(10)
                     continue
 

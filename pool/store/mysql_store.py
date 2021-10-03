@@ -244,13 +244,15 @@ class MySQLPoolStore(AbstractPoolStore):
                 f" ORDER BY pplns_partials.accept_time DESC LIMIT {pplns_n_value} ")
             rows = await cursor.fetchall()
             await cursor.close()
-            ret: dict[bytes32, uint64] = {}
+            res: dict[bytes32, uint64] = {}
             for row in rows:
-                if row[1] in ret:
-                    ret[bytes32(bytes.fromhex(row[1]))] = ret[bytes32(bytes.fromhex(row[1]))] + uint64(row[0])
+                points: uint64 = uint64(row[0])
+                ph: bytes32 = bytes32(bytes.fromhex(row[1]))
+                if ph in res:
+                    res[ph] += points
                 else:
-                    ret[bytes32(bytes.fromhex(row[1]))] = uint64(row[0])
-            return ret
+                    res[ph] = points
+            return res
 
     async def get_pps_farmer_points_and_payout_instructions(self, min_points: int) -> List[Tuple[uint64, bytes]]:
         with (await self.pool) as connection:
@@ -363,7 +365,6 @@ class MySQLPoolStore(AbstractPoolStore):
                                          (payout, launcher_id))
                     await connection.commit()
 
-
     async def add_block(self, launcher_id: bytes32) -> None:
         with (await self.pool) as connection:
             cursor = await connection.cursor()
@@ -397,5 +398,3 @@ class MySQLPoolStore(AbstractPoolStore):
                                  (transaction_id.hex(), pps, amount, launcher_id.hex()))
             await connection.commit()
             await cursor.close()
-
-
