@@ -357,7 +357,7 @@ class MySQLPoolStore(AbstractPoolStore):
                     await cursor.execute(
                         f"INSERT INTO payments(payout_time,block_height,transaction_id,launcher_id,payout_instructions,"
                         f"payout,pps) "
-                        f"VALUES(SYSDATE(6),%s,%s,%s,%s,%s)",
+                        f"VALUES(SYSDATE(6),%s,%s,%s,%s,%s,%s)",
                         (block_confirmed, transaction_id.hex(), launcher_id, payout_instructions, payout, pps)
                     )
                     await connection.commit()
