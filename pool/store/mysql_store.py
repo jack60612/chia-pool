@@ -131,7 +131,7 @@ class MySQLPoolStore(AbstractPoolStore):
             row[8],
             row[9],
             True if row[10] == 1 else False,
-            True if row[11] == 1 else False,
+            True if row[14] == 1 else False,
         )
 
     async def add_farmer_record(self, farmer_record: FarmerRecord, metadata: RequestMetadata):

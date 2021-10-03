@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-import datetime
 
 from blspy import G1Element
 from chia.pools.pool_wallet_info import PoolState
