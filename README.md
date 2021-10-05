@@ -1,6 +1,6 @@
 To update from upstream refer to https://gist.github.com/0xjac/85097472043b697ab57ba1b1c7530274
 ## DB EVENTS
-CREATE EVENT update_sec_points ON SCHEDULE EVERY 10 MINUTE DO UPDATE farmer JOIN (SELECT COALESCE(SUM(pplns_partials.points),0) AS totalPoints, pplns_partials.launcher_id FROM pplns_partials GROUP BY pplns_partials.launcher_id) AS pointTotals ON farmer.launcher_id = pointTotals.launcher_id SET farmer.points = pointTotals.totalPoints;
+CREATE EVENT update_sec_points ON SCHEDULE EVERY 10 MINUTE DO UPDATE farmer JOIN (SELECT SUM(pplns_partials.points) AS totalPoints, pplns_partials.launcher_id FROM pplns_partials GROUP BY pplns_partials.launcher_id) AS pointTotals ON farmer.launcher_id = pointTotals.launcher_id SET farmer.points = pointTotals.totalPoints;
 
 CREATE EVENT remove_old_points ON SCHEDULE EVERY 1 MINUTE DO DELETE FROM pplns_partials WHERE accept_time < (DATE_SUB(SYSDATE(), INTERVAL 1 DAY));
 
