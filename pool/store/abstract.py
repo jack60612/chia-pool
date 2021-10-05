@@ -72,7 +72,8 @@ class AbstractPoolStore(ABC):
         """Fetch pps farmers and their respective payout instructions that are above the set points limit"""
 
     @abstractmethod
-    async def add_partial(self, launcher_id: bytes32, harvester_id: bytes32, timestamp: uint64, difficulty: uint64):
+    async def add_partial(self, launcher_id: bytes32, harvester_id: bytes32, timestamp: uint64, difficulty: uint64,
+                          payout_instructions: str):
         """Register new partial and update corresponding Farmer's points"""
 
     @abstractmethod

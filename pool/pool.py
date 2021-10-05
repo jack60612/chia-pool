@@ -272,7 +272,8 @@ class Pool:
                                                          uint64(int(time.time())), points_received)
                     else:
                         await self.store.add_partial(partial.payload.launcher_id, partial.payload.harvester_id,
-                                                     uint64(int(time.time())), points_received)
+                                                     uint64(int(time.time())), points_received,
+                                                     farmer_record.payout_instructions)
                     self.log.info(
                         f"Farmer pps:{farmer_record.pps_enabled} {farmer_record.launcher_id}/"
                         f"{partial.payload.harvester_id} updated points to: "
