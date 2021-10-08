@@ -322,6 +322,7 @@ def start_pool_server(server_class=PoolServer,
     overrides = config["network_overrides"]["constants"][config["selected_network"]]
     constants: ConsensusConstants = DEFAULT_CONSTANTS.replace_str_to_bytes(**overrides)
     server = server_class(config, constants, pool_store, difficulty_function, payment_manager)
+    workers = multiprocessing.cpu_count() if server.pool_config["multiple_workers"] is True else 1
     app.add_route(server.wrap_http_handler(server.index), "/")
     app.add_route(server.wrap_http_handler(server.get_pool_info), "/pool_info")
     app.add_route(server.wrap_http_handler(server.get_farmer), "/farmer")
