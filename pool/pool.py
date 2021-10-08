@@ -15,7 +15,6 @@ from chia.protocols.pool_protocol import (
     PostFarmerRequest,
     PostFarmerResponse,
     PutFarmerRequest,
-    PutFarmerResponse,
     POOL_PROTOCOL_VERSION,
 )
 from chia.rpc.wallet_rpc_client import WalletRpcClient

@@ -23,5 +23,3 @@ class FarmerRecord(Streamable):
     payout_instructions: str  # This is where the pool will pay out rewards to the farmer
     is_pool_member: bool  # If the farmer leaves the pool, this gets set to False
     pps_enabled: bool  # if pps is enabled this is set to true otherwise it is set to false.
-
-

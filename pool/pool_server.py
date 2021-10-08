@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import os
 import ssl
@@ -7,7 +6,7 @@ import traceback
 from typing import Dict, Callable, Optional
 import multiprocessing
 
-from sanic import Sanic, Request, HTTPResponse, text, json
+from sanic import Sanic, Request, HTTPResponse, text
 import yaml
 from blspy import AugSchemeMPL, G2Element
 from chia.protocols.pool_protocol import (
@@ -26,7 +25,6 @@ from chia.util.byte_types import hexstr_to_bytes
 from chia.util.hash import std_hash
 from chia.consensus.default_constants import DEFAULT_CONSTANTS
 from chia.consensus.constants import ConsensusConstants
-from chia.util.json_util import dict_to_json_str
 from chia.util.ints import uint8, uint64, uint32
 from chia.util.default_root import DEFAULT_ROOT_PATH
 from chia.util.config import load_config
@@ -307,7 +305,6 @@ class PoolServer:
             elif pps is False:
                 await self.pool.store.change_payment_system(launcher_id, 0)
                 response = {'pps_enabled': False, 'pps_changed': True}
-
 
         return sanic_jsonify(response)
 

@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from sanic.log import logger
-import asyncio
 from typing import Optional, Set, List, Tuple, Dict
 
 from chia.pools.pool_wallet_info import PoolState
