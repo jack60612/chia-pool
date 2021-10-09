@@ -487,6 +487,12 @@ class DefaultPaymentManager(AbstractPaymentManager):
                             continue
 
                         self._logger.info(f"Transaction: {transaction}")
+                        try:
+                            await self._store.add_payouts(transaction.confirmed_at_height, payment_targets,
+                                                          transaction.name, 0)
+                            self._logger.info(f"Successfully added payouts to Database")
+                        except Exception as e:
+                            self._logger.error(f"Error adding payouts to database: {e}")
 
                         while (
                                 not transaction.confirmed
@@ -509,11 +515,10 @@ class DefaultPaymentManager(AbstractPaymentManager):
                         self._logger.info(f"Successfully confirmed payments {payment_targets}")
                         # add payouts to db
                         try:
-                            await self._store.add_payouts(transaction.confirmed_at_height, payment_targets,
-                                                          transaction.name, 0)
-                            self._logger.info(f"Successfully added payouts to Database")
+                            await self._store.confirm_payouts(transaction.name)
+                            self._logger.info(f"Payouts were marked confirmed in the Database ")
                         except Exception as e:
-                            self._logger.error(f"Error adding payouts to database: {e}")
+                            self._logger.error(f"Error marking payouts confirmed in the Database: {e}")
                 else:
                     await asyncio.sleep(60)
 
@@ -558,6 +563,12 @@ class DefaultPaymentManager(AbstractPaymentManager):
                             continue
 
                         self._logger.info(f"pps Transaction: {transaction}")
+                        try:
+                            await self._store.add_payouts(transaction.confirmed_at_height, payment_targets,
+                                                          transaction.name, 1)
+                            self._logger.info(f"Successfully added pps payments to Database")
+                        except Exception as e:
+                            self._logger.error(f"Error adding pps payouts to database: {e}")
 
                         while (
                                 not transaction.confirmed
@@ -579,11 +590,10 @@ class DefaultPaymentManager(AbstractPaymentManager):
                         self._logger.info(f"Successfully confirmed pps payments {payment_targets}")
                         # add payouts to db
                         try:
-                            await self._store.add_payouts(transaction.confirmed_at_height, payment_targets,
-                                                          transaction.name, 1)
-                            self._logger.info(f"Successfully added pps payments to Database")
+                            await self._store.confirm_payouts(transaction.name)
+                            self._logger.info(f"PPS Payouts were marked confirmed in the Database ")
                         except Exception as e:
-                            self._logger.error(f"Error adding pps payouts to database: {e}")
+                            self._logger.error(f"Error marking pps payouts confirmed in the Database: {e}")
                 else:
                     await asyncio.sleep(60)
 
