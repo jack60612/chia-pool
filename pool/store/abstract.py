@@ -89,6 +89,10 @@ class AbstractPoolStore(ABC):
         """Add new payout records for given Farmer & Register Payouts to farmers in DB"""
 
     @abstractmethod
+    async def confirm_payouts(self, transaction_id: bytes32) -> None:
+        """Mark all payments with that transaction id as confirmed"""
+
+    @abstractmethod
     async def add_block(self, launcher_id: bytes32) -> None:
         """Add new block to given Farmer's record"""
 

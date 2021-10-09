@@ -97,6 +97,7 @@ class MySQLPoolStore(AbstractPoolStore):
                 "payout_instructions VARCHAR(256),"
                 "payout float,"
                 "pps bool,"
+                "confirmed bool,"
                 "index (launcher_id))"
 
             )
@@ -351,16 +352,23 @@ class MySQLPoolStore(AbstractPoolStore):
 
                     await cursor.execute(
                         f"INSERT INTO payments(payout_time,block_height,transaction_id,launcher_id,payout_instructions,"
-                        f"payout,pps) "
-                        f"VALUES(SYSDATE(6),%s,%s,%s,%s,%s,%s)",
+                        f"payout,pps,confirmed) "
+                        f"VALUES(SYSDATE(6),%s,%s,%s,%s,%s,%s,0)",
                         (block_confirmed, transaction_id.hex(), launcher_id, payout_instructions, payout, pps)
                     )
                     await connection.commit()
                     await cursor.close()
                     cursor = await connection.cursor()
-                    await cursor.execute(f"UPDATE farmer set xch_paid=xch_paid+%s where launcher_id=%s",
+                    await cursor.execute(f"UPDATE farmer SET xch_paid=xch_paid+%s WHERE launcher_id=%s",
                                          (payout, launcher_id))
                     await connection.commit()
+
+    async def confirm_payouts(self, transaction_id: bytes32) -> None:
+        with (await self.pool) as connection:
+            cursor = await connection.cursor()
+            cursor.execute("UPDATE payments SET confirmed = 1 WHERE transaction_id= %s", (transaction_id.hex()))
+            await connection.commit()
+            await cursor.close()
 
     async def add_block(self, launcher_id: bytes32) -> None:
         with (await self.pool) as connection:
