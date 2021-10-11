@@ -38,8 +38,14 @@ class DefaultPaymentManager(AbstractPaymentManager):
         # After this many confirmations, a transaction is considered final and irreversible
         self.confirmation_security_threshold = self._pool_config["confirmation_security_threshold"]
 
-        # Interval for making payout transactions to farmers
+        # Interval for checking for new farmers if standalone mode is activated.
+        self.standalone_search_interval = self._pool_config["standalone_search_interval"]
+
+        # Interval for making payout transactions to pplns farmers
         self.payment_interval = self._pool_config["payment_interval"]
+
+        # Interval for making payout transactions to pps farmers
+        self.pps_payment_interval = self._pool_config["pps_payment_interval"]
 
         # We will not make transactions with more targets than this, to ensure our transaction gets into the blockchain
         # faster.
@@ -116,7 +122,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
         while True:
             self._logger.info("Checking for new pool members")
             self.scan_p2_singleton_puzzle_hashes = await self._store.get_pay_to_singleton_phs()
-            await asyncio.sleep(1800)
+            await asyncio.sleep(self.standalone_search_interval)
 
     async def update_pps_price_loop(self):
         while True:
@@ -444,16 +450,16 @@ class DefaultPaymentManager(AbstractPaymentManager):
                         # Subtract the points from each pps farmer
                         await self._store.clear_pps_points(self.min_points)
                     else:
-                        self._logger.info(f"PPS: No points for any farmer. Waiting {self.payment_interval}")
+                        self._logger.info(f"PPS: No points for any farmer. Waiting {self.pps_payment_interval}")
 
-                await asyncio.sleep(self.payment_interval)
+                await asyncio.sleep(self.pps_payment_interval)
             except asyncio.CancelledError:
                 self._logger.info("Cancelled create_pps_payment_loop, closing")
                 return
             except Exception as e:
                 error_stack = traceback.format_exc()
                 self._logger.error(f"Unexpected error in create_pps_payment_loop: {e} {error_stack}")
-                await asyncio.sleep(self.payment_interval)
+                await asyncio.sleep(self.pps_payment_interval)
 
     async def submit_payment_loop(self):
         while True:
