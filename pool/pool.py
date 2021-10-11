@@ -192,8 +192,9 @@ class Pool:
 
         await self.payment_manager.stop()
         await self.state_keeper.stop()
-        self.wallet_rpc_client.close()
-        await self.wallet_rpc_client.await_closed()
+        if self.wallet_rpc_client is not None:
+            self.wallet_rpc_client.close()
+            await self.wallet_rpc_client.await_closed()
         self.node_rpc_client.close()
         await self.node_rpc_client.await_closed()
         await self.store.close()
