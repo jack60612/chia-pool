@@ -363,10 +363,11 @@ class MySQLPoolStore(AbstractPoolStore):
                                          (payout, launcher_id))
                     await connection.commit()
 
-    async def confirm_payouts(self, transaction_id: bytes32) -> None:
+    async def confirm_payouts(self, transaction_id: bytes32, block_confirmed: int) -> None:
         with (await self.pool) as connection:
             cursor = await connection.cursor()
-            await cursor.execute("UPDATE payments SET confirmed = 1 WHERE transaction_id= %s", (transaction_id.hex()))
+            await cursor.execute("UPDATE payments SET confirmed = 1 AND block_height = %s WHERE transaction_id= %s",
+                                 (block_confirmed, transaction_id.hex()))
             await connection.commit()
             await cursor.close()
 
