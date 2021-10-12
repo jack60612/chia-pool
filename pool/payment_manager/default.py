@@ -520,7 +520,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
                         self._logger.info(f"Successfully confirmed payments {payment_targets}")
                         # add payouts to db
                         try:
-                            await self._store.confirm_payouts(transaction.name)
+                            await self._store.confirm_payouts(transaction.name, transaction.confirmed_at_height)
                             self._logger.info(f"Payouts were marked confirmed in the Database ")
                         except Exception as e:
                             self._logger.error(f"Error marking payouts confirmed in the Database: {e}")
@@ -594,7 +594,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
                         self._logger.info(f"Successfully confirmed pps payments {payment_targets}")
                         # add payouts to db
                         try:
-                            await self._store.confirm_payouts(transaction.name)
+                            await self._store.confirm_payouts(transaction.name, transaction.confirmed_at_height)
                             self._logger.info(f"PPS Payouts were marked confirmed in the Database ")
                         except Exception as e:
                             self._logger.error(f"Error marking pps payouts confirmed in the Database: {e}")
