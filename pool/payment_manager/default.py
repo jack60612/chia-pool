@@ -208,8 +208,8 @@ class DefaultPaymentManager(AbstractPaymentManager):
                             self._logger.info(f"Submitted transaction successfully: {spend_bundle.name().hex()}")
                             # Save transaction to records in DB
                             try:
-                                await self._store.add_block(rec.launcher_id)
                                 for coin_record in ph_to_coins[rec.p2_singleton_puzzle_hash]:
+                                    await self._store.add_block(rec.launcher_id)
                                     await self._store.add_pool_block(coin_record.coin.name(),
                                                                      rec.pps_enabled,
                                                                      float(coin_record.coin.amount / 1000000000000),
