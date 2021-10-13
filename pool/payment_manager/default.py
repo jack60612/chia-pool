@@ -240,28 +240,20 @@ class DefaultPaymentManager(AbstractPaymentManager):
 
                         push_tx_response: Dict = await self._node_rpc_client.push_tx(spend_bundle)
                         if push_tx_response["status"] == "SUCCESS":
-                            # TODO(pool): save transaction in records
-                            # It is now saved
                             self._logger.info(f"Submitted transaction successfully: {spend_bundle.name().hex()}")
                             # Save transaction to records in DB
                             try:
                                 await self._store.add_block(rec.launcher_id)
-                                block_amount = ph_to_amounts[rec.p2_singleton_puzzle_hash] / 1000000000000
-                                while block_amount > 0:
-                                    if block_amount <= 1.75:
-                                        await self._store.add_pool_block(spend_bundle.name(),
-                                                                         rec.pps_enabled,
-                                                                         block_amount,
-                                                                         rec.launcher_id)
-                                    else:
-                                        await self._store.add_pool_block(spend_bundle.name(),
-                                                                         rec.pps_enabled,
-                                                                         block_amount,
-                                                                         rec.launcher_id)
-                                        block_amount = block_amount - 1.75
-                                self._logger.info(f"Successfully added block to Database")
+                                for coin_record in ph_to_coins[rec.p2_singleton_puzzle_hash]:
+                                    await self._store.add_pool_block(coin_record.coin.name(),
+                                                                     rec.pps_enabled,
+                                                                     float(coin_record.coin.amount / 1000000000000),
+                                                                     rec.launcher_id,
+                                                                     int(coin_record.confirmed_block_index),
+                                                                     )
+                                self._logger.info(f"Successfully added blocks to Database")
                             except Exception as e:
-                                self._logger.error(f"Error adding block to database: {e}")
+                                self._logger.error(f"Error adding blocks to database: {e}")
                             # if it was farmed by a pps farmer then send to pps wallet.
                             if rec.pps_enabled is True:
                                 self._logger.info(f"Block was won by a pps farmer, adding amount to transaction.")
@@ -271,7 +263,8 @@ class DefaultPaymentManager(AbstractPaymentManager):
                         else:
                             self._logger.error(f"Error submitting transaction: {push_tx_response}")
                 if pps_payment_amount != 0:
-                    additions_sub_list: Dict = {"puzzle_hash": self.pps_target_puzzle_hash, "amount": pps_payment_amount}
+                    additions_sub_list: Dict = {"puzzle_hash": self.pps_target_puzzle_hash,
+                                                "amount": pps_payment_amount}
                     self._logger.info(f"Will make payments to pps wallet : {additions_sub_list}")
                     await self.send_to_pps.put(additions_sub_list.copy())
                     self._logger.info(f"Successfully added PPS Wallet payment to queue.")
