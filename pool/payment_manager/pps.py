@@ -1,18 +1,14 @@
 import asyncio
 import traceback
-from math import floor
 from typing import Dict, Optional, Set, List, Tuple
 
 from chia.consensus.block_rewards import calculate_pool_reward
-from chia.types.blockchain_format.coin import Coin
 from chia.types.coin_record import CoinRecord
 from chia.util.bech32m import decode_puzzle_hash
 from chia.util.ints import uint32, uint64
 from chia.types.blockchain_format.sized_bytes import bytes32
 from chia.wallet.transaction_record import TransactionRecord
-from chia.pools.pool_puzzles import get_most_recent_singleton_coin_from_coin_spend
 
-from pool.singleton import create_absorb_transaction
 from pool.record import FarmerRecord
 
 from pool.payment_manager.abstract import AbstractPaymentManager
