@@ -246,11 +246,19 @@ class DefaultPaymentManager(AbstractPaymentManager):
                             # Save transaction to records in DB
                             try:
                                 await self._store.add_block(rec.launcher_id)
-                                await self._store.add_pool_block(spend_bundle.name(),
-                                                                 rec.pps_enabled,
-                                                                 ph_to_amounts[
-                                                                     rec.p2_singleton_puzzle_hash] / 1000000000000,
-                                                                 rec.launcher_id)
+                                block_amount = ph_to_amounts[rec.p2_singleton_puzzle_hash] / 1000000000000
+                                while block_amount > 0:
+                                    if block_amount <= 1.75:
+                                        await self._store.add_pool_block(spend_bundle.name(),
+                                                                         rec.pps_enabled,
+                                                                         block_amount,
+                                                                         rec.launcher_id)
+                                    else:
+                                        await self._store.add_pool_block(spend_bundle.name(),
+                                                                         rec.pps_enabled,
+                                                                         block_amount,
+                                                                         rec.launcher_id)
+                                        block_amount = block_amount - 1.75
                                 self._logger.info(f"Successfully added block to Database")
                             except Exception as e:
                                 self._logger.error(f"Error adding block to database: {e}")
