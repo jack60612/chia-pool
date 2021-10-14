@@ -44,11 +44,11 @@ class PaymentServer:
             self.store: AbstractPoolStore = pool_store or SqlitePoolStore()
 
         # This is the wallet fingerprint and ID for the wallet spending the funds from `self.default_target_puzzle_hash`
-        self.pps_wallet_fingerprint = pool_config["wallet_fingerprint"]
-        self.pps_wallet_id = pool_config["wallet_id"]
+        self.pps_wallet_fingerprint = pool_config["pps_wallet_fingerprint"]
+        self.pps_wallet_id = pool_config["pps_wallet_id"]
 
         # rpc hostname to connect to
-        self.rpc_hostname = pool_config["rpc_ip_address"]
+        self.rpc_hostname = pool_config["pps_rpc_ip_address"]
 
         self.node_rpc_client: Optional[FullNodeRpcClient] = None
         self.node_rpc_port = pool_config["node_rpc_port"]

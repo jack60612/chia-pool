@@ -12,14 +12,17 @@ default_difficulty: 1
 default_target_address: txch1xly7ugj4u6e0sgjjsj25lrf9a2ejy0ezr659c29jyhwda9plu20qnwu8dt
 pool_fee_address: txch1mdw5usvgjrhx6e8ja396kyfnwy3jyzltnkdytvt8vcky7nl7d6us54s3hj
 wallet_fingerprint: 1718616103
+pps_wallet_fingerprint: 1718616103
 authentication_token_timeout: 5
 pplns_n_value: 100000
 pps_target_address: txch1mdw5usvgjrhx6e8ja396kyfnwy3jyzaaaf45ft8vcky7nl7d6us54s3hj
 multiple_workers: false
 wallet_id: 1
+pps_wallet_id: 1
 node_rpc_port: 8555
 wallet_rpc_port: 9256
 rpc_ip_address: 127.0.0.1
+pps_rpc_ip_address: 127.0.0.1
 store: MySQLPoolStore
 db_host: 127.0.0.1
 db_port: 3306
