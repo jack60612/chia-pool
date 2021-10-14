@@ -44,8 +44,8 @@ class PaymentServer:
             self.store: AbstractPoolStore = pool_store or SqlitePoolStore()
 
         # This is the wallet fingerprint and ID for the wallet spending the funds from `self.default_target_puzzle_hash`
-        self.wallet_fingerprint = pool_config["wallet_fingerprint"]
-        self.wallet_id = pool_config["wallet_id"]
+        self.pps_wallet_fingerprint = pool_config["wallet_fingerprint"]
+        self.pps_wallet_id = pool_config["wallet_id"]
 
         # rpc hostname to connect to
         self.rpc_hostname = pool_config["rpc_ip_address"]
@@ -58,7 +58,7 @@ class PaymentServer:
         # load payment manager and state keeper
         self.payment_manager: AbstractPaymentManager = \
             server_name or PPSPaymentManager(self.log, pool_config, constants, True)
-        self.state_keeper = StateKeeper(self.log, self.wallet_fingerprint)
+        self.state_keeper = StateKeeper(self.log, self.pps_wallet_fingerprint)
 
     async def start(self):
         await self.store.connect()
@@ -78,11 +78,11 @@ class PaymentServer:
         self.wallet_rpc_client = await WalletRpcClient.create(
             self.rpc_hostname, uint16(self.wallet_rpc_port), DEFAULT_ROOT_PATH, self.config
         )
-        res = await self.wallet_rpc_client.log_in_and_skip(fingerprint=self.wallet_fingerprint)
+        res = await self.wallet_rpc_client.log_in_and_skip(fingerprint=self.pps_wallet_fingerprint)
         if not res["success"]:
             raise ValueError(f"Error logging in: {res['error']}. Make sure your config fingerprint is correct.")
         self.log.info(f"Logging in: {res}")
-        res = await self.wallet_rpc_client.get_wallet_balance(self.wallet_id)
+        res = await self.wallet_rpc_client.get_wallet_balance(self.pps_wallet_id)
         self.log.info(f"Obtaining balance: {res}")
 
     async def stop(self):
