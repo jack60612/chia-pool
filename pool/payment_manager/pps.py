@@ -132,12 +132,12 @@ class PPSPaymentManager(AbstractPaymentManager):
                     continue
 
                 self._logger.info("Starting to create pps payments")
-
-                coin_records: List[CoinRecord] = await self._node_rpc_client.get_coin_records_by_puzzle_hash(
-                    self.pps_target_puzzle_hash,
-                    include_spent_coins=False,
-                    start_height=self.scan_start_height,
-                )
+                async with self._wallet_lock:
+                    coin_records: List[CoinRecord] = await self._node_rpc_client.get_coin_records_by_puzzle_hash(
+                        self.pps_target_puzzle_hash,
+                        include_spent_coins=False,
+                        start_height=self.scan_start_height,
+                    )
 
                 if len(coin_records) == 0:
                     self._logger.info("No PPS funds to distribute.")
