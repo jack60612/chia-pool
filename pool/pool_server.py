@@ -260,7 +260,7 @@ class PoolServer:
         try:
             launcher_id: bytes32 = hexstr_to_bytes(request_obj.args.get("launcher_id"))
             authentication_token: uint64 = uint64(request_obj.args.get("authentication_token"))
-            pps: bool = request_obj.args.get("pps", default=None)
+            pps: str = (request_obj.args.get("pps", default=None))
         except AttributeError:
             return missing_argument()
         authentication_token_error = check_authentication_token(
@@ -293,9 +293,14 @@ class PoolServer:
 
         return await self.login_response(launcher_id, pps)
 
-    async def login_response(self, launcher_id, pps: bool):
+    async def login_response(self, launcher_id, pps_val: Optional[str]):
         payment_record: Optional = await self.pool.store.get_payment_system(launcher_id)
         response = {}
+        pps = None
+        if pps_val == "true" or "True":
+            pps = True
+        elif pps_val == "false" or "False":
+            pps = False
         if payment_record is not None:
             if payment_record[0] == pps or pps is None:
                 response = {'pps_enabled': payment_record[0], 'pps_changed': False}
