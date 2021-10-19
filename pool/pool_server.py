@@ -297,9 +297,9 @@ class PoolServer:
         payment_record: Optional = await self.pool.store.get_payment_system(launcher_id)
         response = {}
         pps = None
-        if pps_val == "true" or "True":
+        if pps_val == "true" or "True" or True:
             pps = True
-        elif pps_val == "false" or "False":
+        elif pps_val == "false" or "False" or False:
             pps = False
         if payment_record is not None:
             if payment_record[0] == pps or pps is None:
