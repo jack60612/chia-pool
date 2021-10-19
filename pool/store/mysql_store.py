@@ -105,8 +105,8 @@ class MySQLPoolStore(AbstractPoolStore):
         await cursor.execute(
             (
                 "CREATE TABLE IF NOT EXISTS blocks("
-                "timestamp DATETIME(6) PRIMARY KEY,"
-                "transaction_id VARCHAR(256),"
+                "timestamp DATETIME(6),"
+                "transaction_id VARCHAR(256) PRIMARY KEY,"
                 "pps bool,"
                 "amount float,"
                 "block_height int,"
@@ -394,7 +394,8 @@ class MySQLPoolStore(AbstractPoolStore):
         with (await self.pool) as connection:
             cursor = await connection.cursor()
             await cursor.execute("INSERT INTO blocks(timestamp,transaction_id,pps,amount,launcher_id,block_height)"
-                                 "VALUES(SYSDATE(6),%s,%s,%s,%s,%s)",
-                                 (transaction_id.hex(), pps, amount, launcher_id.hex(), block_height))
+                                 "VALUES(SYSDATE(6),%s,%s,%s,%s,%s) ON DUPLICATE KEY UPDATE transaction_id=%s",
+                                 (transaction_id.hex(), pps, amount, launcher_id.hex(), block_height,
+                                  transaction_id.hex()))
             await connection.commit()
             await cursor.close()
