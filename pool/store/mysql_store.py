@@ -379,14 +379,6 @@ class MySQLPoolStore(AbstractPoolStore):
             await connection.commit()
             await cursor.close()
 
-    async def change_payment_system(self, launcher_id: bytes32, pps_enabled: int):
-        with (await self.pool) as connection:
-            cursor = await connection.cursor()
-            await cursor.execute(f"UPDATE farmer set pps_enabled=%s, pps_change_datetime=SYSDATE(6) "
-                                 f"where launcher_id=%s", (pps_enabled, launcher_id.hex()))
-            await connection.commit()
-            await cursor.close()
-
     async def get_payment_system(self, launcher_id: bytes32):
         with (await self.pool) as connection:
             cursor = await connection.cursor()

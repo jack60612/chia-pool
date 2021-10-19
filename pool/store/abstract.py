@@ -97,10 +97,6 @@ class AbstractPoolStore(ABC):
         """Add new block to given Farmer's record"""
 
     @abstractmethod
-    async def change_payment_system(self, launcher_id: bytes32, pps_enabled: int):
-        """Enable or disable pps payment system as requested by pps"""
-
-    @abstractmethod
     async def get_payment_system(self, launcher_id: bytes32):
         """Get Current payment system status for a launcher_id"""
     @abstractmethod

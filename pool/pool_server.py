@@ -260,7 +260,6 @@ class PoolServer:
         try:
             launcher_id: bytes32 = hexstr_to_bytes(request_obj.args.get("launcher_id"))
             authentication_token: uint64 = uint64(request_obj.args.get("authentication_token"))
-            pps: str = (request_obj.args.get("pps", default=None))
         except AttributeError:
             return missing_argument()
         authentication_token_error = check_authentication_token(
@@ -291,26 +290,11 @@ class PoolServer:
 
         self.pool.log.info(f"Login successful for launcher_id: {launcher_id.hex()}")
 
-        return await self.login_response(launcher_id, pps)
+        return await self.login_response(launcher_id)
 
-    async def login_response(self, launcher_id, pps_val: Optional[str]):
+    async def login_response(self, launcher_id):
         payment_record: Optional = await self.pool.store.get_payment_system(launcher_id)
-        response = {}
-        pps = None
-        if pps_val == "true" or "True" or True:
-            pps = True
-        elif pps_val == "false" or "False" or False:
-            pps = False
-        if payment_record is not None:
-            if payment_record[0] == pps or pps is None:
-                response = {'pps_enabled': payment_record[0], 'pps_changed': False}
-            elif pps is True:
-                await self.pool.store.change_payment_system(launcher_id, 1)
-                response = {'pps_enabled': True, 'pps_changed': True}
-            elif pps is False:
-                await self.pool.store.change_payment_system(launcher_id, 0)
-                response = {'pps_enabled': False, 'pps_changed': True}
-
+        response = {'pps_enabled': payment_record[0]}
         return sanic_jsonify(response)
 
 
