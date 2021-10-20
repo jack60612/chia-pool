@@ -372,13 +372,6 @@ class MySQLPoolStore(AbstractPoolStore):
             await connection.commit()
             await cursor.close()
 
-    async def add_block(self, launcher_id: bytes32) -> None:
-        with (await self.pool) as connection:
-            cursor = await connection.cursor()
-            await cursor.execute(f"UPDATE farmer set blocks=blocks+1 where launcher_id=%s", (launcher_id.hex()))
-            await connection.commit()
-            await cursor.close()
-
     async def get_payment_system(self, launcher_id: bytes32):
         with (await self.pool) as connection:
             cursor = await connection.cursor()

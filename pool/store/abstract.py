@@ -93,10 +93,6 @@ class AbstractPoolStore(ABC):
         """Mark all payments with that transaction id as confirmed"""
 
     @abstractmethod
-    async def add_block(self, launcher_id: bytes32) -> None:
-        """Add new block to given Farmer's record"""
-
-    @abstractmethod
     async def get_payment_system(self, launcher_id: bytes32):
         """Get Current payment system status for a launcher_id"""
     @abstractmethod
