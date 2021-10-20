@@ -72,6 +72,7 @@ class MySQLPoolStore(AbstractPoolStore):
         await cursor.execute(
             "CREATE TABLE IF NOT EXISTS partial(launcher_id VARCHAR(256), "
             "timestamp bigint, difficulty bigint, harvester_id VARCHAR(256), "
+            "FOREIGN KEY (launcher_id) REFERENCES farmer(launcher_id),"
             "index (timestamp), index (launcher_id))"
         )
 
@@ -83,6 +84,7 @@ class MySQLPoolStore(AbstractPoolStore):
                 "points int,"
                 "launcher_id VARCHAR(256),"
                 "harvester_id VARCHAR(256),"
+                "FOREIGN KEY (launcher_id) REFERENCES farmer(launcher_id),"
                 "index (launcher_id))"
 
             )
@@ -98,6 +100,7 @@ class MySQLPoolStore(AbstractPoolStore):
                 "payout float,"
                 "pps bool,"
                 "confirmed bool,"
+                "FOREIGN KEY (launcher_id) REFERENCES farmer(launcher_id),"
                 "index (launcher_id))"
 
             )
@@ -110,7 +113,8 @@ class MySQLPoolStore(AbstractPoolStore):
                 "pps bool,"
                 "amount float,"
                 "block_height int,"
-                "launcher_id VARCHAR(256))"
+                "launcher_id VARCHAR(256),"
+                "FOREIGN KEY (launcher_id) REFERENCES farmer(launcher_id))"
             )
         )
         await connection.commit()
