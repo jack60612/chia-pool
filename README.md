@@ -5,6 +5,9 @@ CREATE EVENT update_sec_points ON SCHEDULE EVERY 10 MINUTE DO UPDATE farmer JOIN
 CREATE EVENT remove_old_points ON SCHEDULE EVERY 1 MINUTE DO DELETE FROM pplns_partials WHERE accept_time < (DATE_SUB(SYSDATE(), INTERVAL 1 DAY));
 
 CREATE EVENT remove_points_from_old_users ON SCHEDULE EVERY 1 HOUR DO UPDATE farmer JOIN (SELECT farmer.launcher_id, farmer.pps_enabled FROM farmer LEFT JOIN pplns_partials ON pplns_partials.launcher_id = farmer.launcher_id WHERE pplns_partials.launcher_id IS NULL and farmer.pps_enabled = 0 ) AS emptyFarmers ON farmer.launcher_id = emptyFarmers.launcher_id SET farmer.points = 0;
+
+CREATE EVENT update_farmer_blocks ON SCHEDULE EVERY 10 MINUTE DO UPDATE farmer JOIN (SELECT COUNT(pplns_partials.block_height) AS totalBlocks, blocks.launcher_id FROM blocks GROUP BY blocks.launcher_id) AS blockTotals ON farmer.launcher_id = blockTotals.launcher_id SET farmer.blocks = blockTotals.totalBlocks;
+
 ## Pool Reference V1
 This code is provided under the Apache 2.0 license.
 Note: the draft specification is in the SPECIFICATION.md file.
