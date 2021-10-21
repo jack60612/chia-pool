@@ -164,7 +164,7 @@ class PPSPaymentManager(AbstractPaymentManager):
                         self._logger.info(f"Paying out {mojo_per_point} mojo / point for pps")
                         if total_points * mojo_per_point > amount_to_distribute:
                             self._logger.info(
-                                f"Do not have enough pps funds to distribute: {total_amount_claimed / (10 ** 12)} ,"
+                                f"Do not have enough pps funds to distribute: {total_amount_claimed / (10 ** 12)}, "
                                 "skipping payout")
                             await asyncio.sleep(self.pps_payment_interval)
                             continue
