@@ -148,12 +148,6 @@ class PPSPaymentManager(AbstractPaymentManager):
                 pool_coin_amount = int(total_amount_claimed * self.pps_fee)
                 amount_to_distribute = total_amount_claimed - pool_coin_amount
 
-                if total_amount_claimed < calculate_pool_reward(uint32(1)):  # 1.75 XCH
-                    self._logger.info(f"Do not have enough pps funds to distribute: {total_amount_claimed / (10 ** 12)}"
-                                      f", skipping payout")
-                    await asyncio.sleep(10)
-                    continue
-
                 self._logger.info(f"PPS:Total amount claimed: {total_amount_claimed / (10 ** 12)}")
                 self._logger.info(f"PPS:Pool coin amount (includes blockchain fee) {pool_coin_amount / (10 ** 12)}")
                 self._logger.info(f"PPS:Total amount to distribute: {amount_to_distribute / (10 ** 12)}")
@@ -168,7 +162,12 @@ class PPSPaymentManager(AbstractPaymentManager):
                     if total_points > 0:
                         mojo_per_point = self.pps_share_price
                         self._logger.info(f"Paying out {mojo_per_point} mojo / point for pps")
-
+                        if total_points * mojo_per_point > amount_to_distribute:
+                            self._logger.info(
+                                f"Do not have enough pps funds to distribute: {total_amount_claimed / (10 ** 12)} ,"
+                                "skipping payout")
+                            await asyncio.sleep(self.pps_payment_interval)
+                            continue
                         additions_sub_list: List[Dict] = [
                             {"puzzle_hash": self.pool_fee_puzzle_hash, "amount": pool_coin_amount}
                         ]
