@@ -44,19 +44,19 @@ number_of_partials_target: 300
 time_target: 86400
 relative_lock_height: 32
 logging:
-  log_path: ../logs
+  log_path: ./logs/
   log_filename: pool-server.log
   log_level: INFO
   log_maxfilesrotation: 7
   log_stdout: true
 PPS_logging:
-  log_path: ../logs
+  log_path: ./logs/
   log_filename: pool-pps.log
   log_level: INFO
   log_maxfilesrotation: 7
   log_stdout: true
 PPLNS_logging:
-  log_path: ../logs
+  log_path: ./logs/
   log_filename: pool-pplns.log
   log_level: INFO
   log_maxfilesrotation: 7

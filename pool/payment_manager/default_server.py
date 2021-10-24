@@ -33,8 +33,10 @@ class PaymentServer:
         self.constants = constants
         # setup logging
         self.log = logging
-        self.log.basicConfig(level=logging.INFO)
-        initialize_logging("pool", pool_config["PPLNS_logging"], pathlib.Path(pool_config["PPLNS_logging"]["log_path"]))
+        self.log.basicConfig(level=logging.INFO,
+                             filename=pathlib.Path(pool_config["PPLNS_logging"]["log_path"]))
+        initialize_logging("pplns_payment", pool_config["PPLNS_logging"],
+                           pathlib.Path(pool_config["PPLNS_logging"]["log_path"]))
 
         if pool_config.get('store') == "MySQLPoolStore":
             from pool.store.mysql_store import MySQLPoolStore

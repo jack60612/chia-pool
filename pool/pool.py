@@ -61,7 +61,8 @@ class Pool:
         # logging config
         self.log = logging
         # If you want to log to a file: use filename='example.log', encoding='utf-8'
-        self.log.basicConfig(level=logging.INFO)
+        self.log.basicConfig(level=logging.INFO,
+                             filename=pathlib.Path(pool_config["logging"]["log_path"]))
 
         initialize_logging("pool", pool_config["logging"], pathlib.Path(pool_config["logging"]["log_path"]))
 
