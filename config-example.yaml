@@ -18,6 +18,7 @@ pplns_n_value: 100000
 pps_target_address: txch1mdw5usvgjrhx6e8ja396kyfnwy3jyzaaaf45ft8vcky7nl7d6us54s3hj
 multiple_workers: false
 wallet_id: 1
+pps_minimum_payout: 0.1
 pps_wallet_id: 1
 node_rpc_port: 8555
 wallet_rpc_port: 9256
@@ -29,7 +30,6 @@ db_port: 3306
 db_user: admin
 db_password: X6ZS3VQ48ZhW
 db_name: pool
-min_pps_points: 1
 pps_share_price: 1
 partial_time_limit: 25
 partial_confirmation_delay: 300

@@ -23,8 +23,8 @@ class PPSPaymentManager(AbstractPaymentManager):
         super().__init__(*args, **kwargs)
 
         # Don't scan anything before this height, for efficiency (for example pool start date)
-        self.min_points = self._pool_config["min_pps_points"]
         self.pps_share_price: float = 0
+        self.points_for_min_payout: int = 0
         self.scan_start_height: uint32 = uint32(self._pool_config["scan_start_height"])
 
         # After this many confirmations, a transaction is considered final and irreversible
@@ -54,6 +54,8 @@ class PPSPaymentManager(AbstractPaymentManager):
         self.pps_wallet_fingerprint = self._pool_config["pps_wallet_fingerprint"]
         self.pps_wallet_id = self._pool_config["pps_wallet_id"]
 
+        # This is the minimum payout in xch
+        self.pps_min_payout = self._pool_config["pps_wallet_id"]
         # This is the list of payments that we have not sent yet, to farmers
         self.pps_pending_payments: Optional[asyncio.Queue] = None
 
@@ -106,6 +108,8 @@ class PPSPaymentManager(AbstractPaymentManager):
             # get mojo per tib.
             price_tib = (xch_daily / netspace_tib)
             self.pps_share_price = price_tib / 100  # price per share in mojo
+            xch_per_point = self.pps_share_price / 1000000000000  # price per share in XCH
+            self.points_for_min_payout = int(self.pps_min_payout / xch_per_point)
             self._logger.info(f"Updated Price Per share to {price_tib / 1000000000000} XCH per TiB")
             await asyncio.sleep(240)
 
@@ -157,7 +161,7 @@ class PPSPaymentManager(AbstractPaymentManager):
                     # but other blockchain addresses can also be used.
                     points_and_ph: List[
                         Tuple[uint64, bytes]
-                    ] = await self._store.get_pps_farmer_points_and_payout_instructions(self.min_points)
+                    ] = await self._store.get_pps_farmer_points_and_payout_instructions(self.points_for_min_payout)
                     total_points = sum([pt for (pt, ph) in points_and_ph])
                     if total_points > 0:
                         mojo_per_point = self.pps_share_price
