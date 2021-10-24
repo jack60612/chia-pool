@@ -159,9 +159,10 @@ class PPSPaymentManager(AbstractPaymentManager):
                 async with self._store.lock:
                     # Get the points of each farmer, as well as payout instructions. Here a chia address is used,
                     # but other blockchain addresses can also be used.
+                    min_points = self.points_for_min_payout
                     points_and_ph: List[
                         Tuple[uint64, bytes]
-                    ] = await self._store.get_pps_farmer_points_and_payout_instructions(self.points_for_min_payout)
+                    ] = await self._store.get_pps_farmer_points_and_payout_instructions(min_points)
                     total_points = sum([pt for (pt, ph) in points_and_ph])
                     if total_points > 0:
                         mojo_per_point = self.pps_share_price
@@ -189,7 +190,7 @@ class PPSPaymentManager(AbstractPaymentManager):
                             await self.pps_pending_payments.put(additions_sub_list.copy())
 
                         # Subtract the points from each pps farmer
-                        await self._store.clear_pps_points(self.min_points)
+                        await self._store.clear_pps_points(min_points)
                     else:
                         self._logger.info(f"PPS: No points for any farmer. Waiting {self.pps_payment_interval}")
 
