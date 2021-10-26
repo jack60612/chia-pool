@@ -68,7 +68,8 @@ async def get_singleton_state(
             last_spend: Optional[CoinSpend] = await get_coin_spend(node_rpc_client, launcher_coin)
             delay_time, delay_puzzle_hash = get_delayed_puz_info_from_launcher_spend(last_spend)
             saved_state = solution_to_pool_state(last_spend)
-            assert last_spend is not None and saved_state is not None
+            if not (last_spend is not None and saved_state is not None):
+                raise AssertionError
         else:
             last_spend = farmer_record.singleton_tip
             saved_state = farmer_record.singleton_tip_state
@@ -77,10 +78,12 @@ async def get_singleton_state(
 
         saved_spend = last_spend
         last_not_none_state: PoolState = saved_state
-        assert last_spend is not None
+        if last_spend is None:
+            raise AssertionError
 
         last_coin_record: Optional[CoinRecord] = await node_rpc_client.get_coin_record_by_name(last_spend.coin.name())
-        assert last_coin_record is not None
+        if last_coin_record is None:
+            raise AssertionError
 
         while True:
             # Get next coin solution
@@ -89,7 +92,8 @@ async def get_singleton_state(
                 # This means the singleton is invalid
                 return None
             next_coin_record: Optional[CoinRecord] = await node_rpc_client.get_coin_record_by_name(next_coin.name())
-            assert next_coin_record is not None
+            if next_coin_record is None:
+                raise AssertionError
 
             if not next_coin_record.spent:
                 if not validate_puzzle_hash(
@@ -105,7 +109,8 @@ async def get_singleton_state(
                 break
 
             last_spend: Optional[CoinSpend] = await get_coin_spend(node_rpc_client, next_coin_record)
-            assert last_spend is not None
+            if last_spend is None:
+                raise AssertionError
 
             pool_state: Optional[PoolState] = solution_to_pool_state(last_spend)
 
@@ -150,7 +155,8 @@ async def create_absorb_transaction(
         return None
     last_spend, last_state, last_state_2 = singleton_state_tuple
     # Here the buried state is equivalent to the latest state, because we use 0 as the security_threshold
-    assert last_state == last_state_2
+    if last_state != last_state_2:
+        raise AssertionError
 
     if last_state.state == PoolSingletonState.SELF_POOLING:
         log.info(f"Don't try to absorb from former farmer {farmer_record.launcher_id}.")
@@ -159,7 +165,8 @@ async def create_absorb_transaction(
     launcher_coin_record: Optional[CoinRecord] = await node_rpc_client.get_coin_record_by_name(
         farmer_record.launcher_id
     )
-    assert launcher_coin_record is not None
+    if launcher_coin_record is None:
+        raise AssertionError
 
     all_spends: List[CoinSpend] = []
     for reward_coin_record in reward_coin_records:
