@@ -350,7 +350,8 @@ class DefaultPaymentManager(AbstractPaymentManager):
                     async with self._wallet_lock:
 
                         payment_targets = await self.pending_payments.get()
-                        assert len(payment_targets) > 0
+                        if len(payment_targets) <= 0:
+                            raise AssertionError
 
                         self._logger.info(f"Submitting a payment: {payment_targets}")
                         # TODO(pool): make sure you have enough to pay the blockchain fee, this will be taken out of the
