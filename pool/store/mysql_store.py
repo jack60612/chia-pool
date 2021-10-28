@@ -180,7 +180,7 @@ class MySQLPoolStore(AbstractPoolStore):
         with (await self.pool) as connection:
             cursor = await connection.cursor()
             await cursor.execute(
-                f"SELECT * FROM farmer WHERE launcher_id=%s", (launcher_id.hex(),),
+                f"SELECT * FROM farmer WHERE launcher_id=%s", (launcher_id.hex())
             )
             row = await cursor.fetchone()
             if row is None:
@@ -297,8 +297,8 @@ class MySQLPoolStore(AbstractPoolStore):
         with (await self.pool) as connection:
             cursor = await connection.cursor()
             await cursor.execute(
-                f"UPDATE farmer set overall_points=overall_points+%s where launcher_id=%s",
-                (difficulty, launcher_id.hex())
+                f"UPDATE farmer set overall_points=overall_points+%s, points=points+%s where launcher_id=%s",
+                (difficulty, difficulty, launcher_id.hex())
             )
             await connection.commit()
             await cursor.close()
