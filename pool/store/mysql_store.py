@@ -75,22 +75,11 @@ class MySQLPoolStore(AbstractPoolStore):
             "timestamp bigint,"
             "difficulty bigint,"
             "harvester_id VARCHAR(256), "
+            "payout_instructions VARCHAR(256),"
+            "accept_time DATETIME(6),"
+            "pps boolean,"
             "FOREIGN KEY (launcher_id) REFERENCES farmer(launcher_id),"
             "index (timestamp), index (launcher_id))"
-        )
-
-        await cursor.execute(
-            (
-                "CREATE TABLE IF NOT EXISTS pplns_partials("
-                "accept_time  DATETIME(6) PRIMARY KEY,"
-                "payout_instructions VARCHAR(256),"
-                "points int,"
-                "launcher_id VARCHAR(256),"
-                "harvester_id VARCHAR(256),"
-                "FOREIGN KEY (launcher_id) REFERENCES farmer(launcher_id),"
-                "index (launcher_id))"
-
-            )
         )
         await cursor.execute(
             (
@@ -247,7 +236,7 @@ class MySQLPoolStore(AbstractPoolStore):
         with (await self.pool) as connection:
             cursor = await connection.cursor()
             await cursor.execute(
-                f"SELECT points, payout_instructions, accept_time FROM pplns_partials ORDER BY accept_time "
+                f"SELECT difficulty, payout_instructions, accept_time FROM partial WHERE pps=0 ORDER BY accept_time "
                 f"DESC LIMIT %s", (pplns_n_value))
             rows = await cursor.fetchall()
             await cursor.close()
@@ -289,12 +278,12 @@ class MySQLPoolStore(AbstractPoolStore):
             await cursor.close()
 
     async def add_partial(self, launcher_id: bytes32, harvester_id: bytes32, timestamp: uint64, difficulty: uint64,
-                          payout_instructions: str):
+                          payout_instructions: str, pps: int):
         with (await self.pool) as connection:
             cursor = await connection.cursor()
-            await cursor.execute("INSERT INTO partial VALUES(%s, %s, %s, %s)", (launcher_id.hex(), timestamp,
-                                                                                difficulty, harvester_id.hex()),
-                                 )
+            await cursor.execute("INSERT INTO partial VALUES(%s, %s, %s, %s, %s,SYSDATE(6),%s)",
+                                 (launcher_id.hex(), timestamp, difficulty, harvester_id.hex(), payout_instructions,
+                                  pps))
             await connection.commit()
             await cursor.close()
         with (await self.pool) as connection:
@@ -303,29 +292,6 @@ class MySQLPoolStore(AbstractPoolStore):
                 f"UPDATE farmer set overall_points=overall_points+%s, points=points+%s where launcher_id=%s",
                 (difficulty, difficulty, launcher_id.hex())
             )
-            await connection.commit()
-            await cursor.close()
-            cursor = await connection.cursor()
-            await cursor.execute(
-                f"INSERT INTO pplns_partials(points,launcher_id,harvester_id,payout_instructions,accept_time) "
-                f"VALUES(%s, %s, %s, %s, SYSDATE(6))",
-                (difficulty, launcher_id.hex(), harvester_id.hex(), payout_instructions)
-
-            )
-            await connection.commit()
-
-    async def add_pps_partial(self, launcher_id: bytes32, harvester_id: bytes32, timestamp: uint64, difficulty: uint64):
-        with (await self.pool) as connection:
-            cursor = await connection.cursor()
-            await cursor.execute("INSERT INTO partial VALUES(%s, %s, %s, %s)", (launcher_id.hex(), timestamp,
-                                                                                difficulty, harvester_id.hex()),
-                                 )
-            await connection.commit()
-            await cursor.close()
-            cursor = await connection.cursor()
-            await cursor.execute(
-                f"UPDATE farmer set overall_points=overall_points+%s, points=points+%s where launcher_id=%s",
-                (difficulty, difficulty, launcher_id.hex()))
             await connection.commit()
             await cursor.close()
 
@@ -352,7 +318,7 @@ class MySQLPoolStore(AbstractPoolStore):
                     await cursor.execute(f"SELECT launcher_id from farmer where payout_instructions=%s",
                                         (payout_instructions))
                 else:
-                    await cursor.execute(f"SELECT launcher_id from pplns_partials where payout_instructions=%s",
+                    await cursor.execute(f"SELECT launcher_id from partial where payout_instructions=%s",
                                         (payout_instructions))
                 row = await cursor.fetchone()
                 await cursor.close()

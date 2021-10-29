@@ -270,12 +270,13 @@ class Pool:
 
                 if farmer_record.is_pool_member:
                     if farmer_record.pps_enabled:
-                        await self.store.add_pps_partial(partial.payload.launcher_id, partial.payload.harvester_id,
-                                                         uint64(int(time.time())), points_received)
+                        await self.store.add_partial(partial.payload.launcher_id, partial.payload.harvester_id,
+                                                     uint64(int(time.time())), points_received,
+                                                     farmer_record.payout_instructions, pps=1)
                     else:
                         await self.store.add_partial(partial.payload.launcher_id, partial.payload.harvester_id,
                                                      uint64(int(time.time())), points_received,
-                                                     farmer_record.payout_instructions)
+                                                     farmer_record.payout_instructions, pps=0)
                     self.log.info(
                         f"Farmer pps:{farmer_record.pps_enabled} {farmer_record.launcher_id}/"
                         f"{partial.payload.harvester_id} updated points to: "

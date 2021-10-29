@@ -72,12 +72,8 @@ class AbstractPoolStore(ABC):
 
     @abstractmethod
     async def add_partial(self, launcher_id: bytes32, harvester_id: bytes32, timestamp: uint64, difficulty: uint64,
-                          payout_instructions: str):
+                          payout_instructions: str, pps: int):
         """Register new partial and update corresponding Farmer's points"""
-
-    @abstractmethod
-    async def add_pps_partial(self, launcher_id: bytes32, harvester_id: bytes32, timestamp: uint64, difficulty: uint64):
-        """Register new partial and update corresponding pps Farmer's points"""
 
     @abstractmethod
     async def get_recent_partials(self, launcher_id: bytes32, count: int) -> List[Tuple[uint64, uint64]]:
