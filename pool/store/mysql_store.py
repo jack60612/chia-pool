@@ -70,8 +70,11 @@ class MySQLPoolStore(AbstractPoolStore):
         )
 
         await cursor.execute(
-            "CREATE TABLE IF NOT EXISTS partial(launcher_id VARCHAR(256), "
-            "timestamp bigint, difficulty bigint, harvester_id VARCHAR(256), "
+            "CREATE TABLE IF NOT EXISTS partial("
+            "launcher_id VARCHAR(256), "
+            "timestamp bigint,"
+            "difficulty bigint,"
+            "harvester_id VARCHAR(256), "
             "FOREIGN KEY (launcher_id) REFERENCES farmer(launcher_id),"
             "index (timestamp), index (launcher_id))"
         )
