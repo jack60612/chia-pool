@@ -345,11 +345,13 @@ class MySQLPoolStore(AbstractPoolStore):
                 payout_instructions = payment_target["puzzle_hash"].hex()
                 payout: float = payment_target["amount"] / 1000000000000  # convert from mojo to chia
                 cursor = await connection.cursor()
-
-                await cursor.execute(f"SELECT launcher_id from farmer where payout_instructions=%s",
-                                     (payout_instructions))
+                if pps is 1:
+                    await cursor.execute(f"SELECT launcher_id from farmer where payout_instructions=%s",
+                                        (payout_instructions))
+                else:
+                    await cursor.execute(f"SELECT launcher_id from pplns_partials where payout_instructions=%s",
+                                        (payout_instructions))
                 row = await cursor.fetchone()
-
                 await cursor.close()
                 if row is not None:  # launcher_id not in db. Probably just the fee address.
                     launcher_id = row[0]
