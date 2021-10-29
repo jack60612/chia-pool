@@ -60,7 +60,7 @@ class MySQLPoolStore(AbstractPoolStore):
                 "difficulty bigint,"
                 "payout_instructions VARCHAR(256),"
                 "is_pool_member tinyint,"
-                "overall_points bigint,"
+                "overall_points bigint DEFAULT 0,"
                 "blocks int DEFAULT 0,"
                 "xch_paid float DEFAULT 0,"
                 "pps_enabled BOOLEAN DEFAULT 0,"
