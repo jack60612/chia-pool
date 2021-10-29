@@ -34,8 +34,9 @@ class PaymentServer:
         # setup logging
         self.log = logging
         self.log.basicConfig(level=logging.INFO,
-                             filename=pool_config["PPLNS_logging"]["log_path"] +
-                                      pool_config["PPLNS_logging"]["log_filename"])
+                             filename=pool_config["PPLNS_logging"]["log_path"]+
+                                      pool_config["PPLNS_logging"]["log_filename"],
+                             force=True)
         initialize_logging("pplns_payment", pool_config["PPLNS_logging"],
                            pathlib.Path(pool_config["PPLNS_logging"]["log_path"]))
 
