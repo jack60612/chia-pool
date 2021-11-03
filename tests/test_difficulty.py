@@ -105,5 +105,6 @@ class TestDifficulty(unittest.TestCase):
         if get_new_difficulty(partials, num_partials * 2, time_target, 20, current_time, 1) != 9:
             raise AssertionError
 
+
 if __name__ == "__main__":
     unittest.main()

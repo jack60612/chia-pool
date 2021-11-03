@@ -35,8 +35,13 @@ class AbstractPaymentManager(ABC):
         self._wallet_lock = asyncio.Lock()
 
     @abstractmethod
-    async def start(self, node_rpc_client: FullNodeRpcClient, wallet_rpc_client: WalletRpcClient,
-                    store: AbstractPoolStore, state_keeper: StateKeeper):
+    async def start(
+        self,
+        node_rpc_client: FullNodeRpcClient,
+        wallet_rpc_client: WalletRpcClient,
+        store: AbstractPoolStore,
+        state_keeper: StateKeeper,
+    ):
         """
         Save connection objects and start the periodic tasks
         """

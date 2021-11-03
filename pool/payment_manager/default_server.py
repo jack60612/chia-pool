@@ -22,9 +22,13 @@ from pool.store.abstract import AbstractPoolStore
 
 
 class PaymentServer:
-    def __init__(self, config: Dict, constants: ConsensusConstants,
-                 pool_store: Optional[AbstractPoolStore] = None,
-                 server_name: Optional[AbstractPaymentManager] = None):
+    def __init__(
+        self,
+        config: Dict,
+        constants: ConsensusConstants,
+        pool_store: Optional[AbstractPoolStore] = None,
+        server_name: Optional[AbstractPaymentManager] = None,
+    ):
         # We load our configuration from here
         with open(os.getcwd() + "/config.yaml") as f:
             pool_config: Dict = yaml.safe_load(f)
@@ -33,18 +37,22 @@ class PaymentServer:
         self.constants = constants
         # setup logging
         self.log = logging
-        self.log.basicConfig(level=logging.INFO,
-                             filename=pool_config["PPLNS_logging"]["log_path"]+
-                                      pool_config["PPLNS_logging"]["log_filename"],
-                             force=True)
-        initialize_logging("pplns_payment", pool_config["PPLNS_logging"],
-                           pathlib.Path(pool_config["PPLNS_logging"]["log_path"]))
+        self.log.basicConfig(
+            level=logging.INFO,
+            filename=pool_config["PPLNS_logging"]["log_path"] + pool_config["PPLNS_logging"]["log_filename"],
+            force=True,
+        )
+        initialize_logging(
+            "pplns_payment", pool_config["PPLNS_logging"], pathlib.Path(pool_config["PPLNS_logging"]["log_path"])
+        )
 
-        if pool_config.get('store') == "MySQLPoolStore":
+        if pool_config.get("store") == "MySQLPoolStore":
             from pool.store.mysql_store import MySQLPoolStore
+
             self.store: AbstractPoolStore = MySQLPoolStore()
         else:
             from pool.store.sqlite_store import SqlitePoolStore
+
             self.store: AbstractPoolStore = pool_store or SqlitePoolStore()
 
         # This is the wallet fingerprint and ID for the wallet spending the funds from `self.default_target_puzzle_hash`
@@ -60,8 +68,9 @@ class PaymentServer:
         self.wallet_rpc_port = pool_config["wallet_rpc_port"]
 
         # load payment manager and state keeper
-        self.payment_manager: AbstractPaymentManager = \
-            server_name or DefaultPaymentManager(self.log, pool_config, constants, True)
+        self.payment_manager: AbstractPaymentManager = server_name or DefaultPaymentManager(
+            self.log, pool_config, constants, True
+        )
         self.state_keeper = StateKeeper(self.log, self.wallet_fingerprint)
 
     async def start(self):
@@ -70,8 +79,7 @@ class PaymentServer:
         await self.init_wallet_rpc()
 
         await self.state_keeper.start(self.node_rpc_client, self.wallet_rpc_client)
-        await self.payment_manager.start(self.node_rpc_client, self.wallet_rpc_client, self.store,
-                                         self.state_keeper)
+        await self.payment_manager.start(self.node_rpc_client, self.wallet_rpc_client, self.store, self.state_keeper)
 
     async def init_node_rpc(self):
         self.node_rpc_client = await FullNodeRpcClient.create(
@@ -102,8 +110,9 @@ class PaymentServer:
 server: Optional[PaymentServer] = None
 
 
-async def start_payment_server(pool_store: Optional[AbstractPoolStore] = None,
-                               server_name: Optional[AbstractPaymentManager] = None):
+async def start_payment_server(
+    pool_store: Optional[AbstractPoolStore] = None, server_name: Optional[AbstractPaymentManager] = None
+):
     global server
     config = load_config(DEFAULT_ROOT_PATH, "config.yaml")
     overrides = config["network_overrides"]["constants"][config["selected_network"]]

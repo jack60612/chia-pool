@@ -70,9 +70,14 @@ def get_ssl_context(config):
 
 
 class PoolServer:
-    def __init__(self, config: Dict, constants: ConsensusConstants, pool_store: Optional[AbstractPoolStore] = None,
-                 difficulty_function: Callable = get_new_difficulty,
-                 payment_manager: Optional[AbstractPaymentManager] = None):
+    def __init__(
+        self,
+        config: Dict,
+        constants: ConsensusConstants,
+        pool_store: Optional[AbstractPoolStore] = None,
+        difficulty_function: Callable = get_new_difficulty,
+        payment_manager: Optional[AbstractPaymentManager] = None,
+    ):
 
         # We load our configurations from here
         with open(os.getcwd() + "/config.yaml") as f:
@@ -196,7 +201,8 @@ class PoolServer:
             return authentication_token_error
 
         post_farmer_response = await self.pool.add_farmer(
-            post_farmer_request, self.post_metadata_from_request(request_obj))
+            post_farmer_request, self.post_metadata_from_request(request_obj)
+        )
 
         self.pool.log.info(
             f"post_farmer response {post_farmer_response}, "
@@ -217,8 +223,9 @@ class PoolServer:
             return authentication_token_error
 
         # Process the request
-        put_farmer_response = await self.pool.update_farmer(put_farmer_request,
-                                                            self.post_metadata_from_request(request_obj))
+        put_farmer_response = await self.pool.update_farmer(
+            put_farmer_request, self.post_metadata_from_request(request_obj)
+        )
 
         self.pool.log.info(
             f"put_farmer response {put_farmer_response}, "
@@ -294,17 +301,19 @@ class PoolServer:
 
     async def login_response(self, launcher_id):
         payment_record: Optional = await self.pool.store.get_payment_system(launcher_id)
-        response = {'pps_enabled': payment_record[0]}
+        response = {"pps_enabled": payment_record[0]}
         return sanic_jsonify(response)
 
 
 server: Optional[PoolServer] = None
 
 
-def start_pool_server(server_class=PoolServer,
-                      pool_store: Optional[AbstractPoolStore] = None,
-                      difficulty_function: Callable = get_new_difficulty,
-                      payment_manager: Optional[AbstractPaymentManager] = None):
+def start_pool_server(
+    server_class=PoolServer,
+    pool_store: Optional[AbstractPoolStore] = None,
+    difficulty_function: Callable = get_new_difficulty,
+    payment_manager: Optional[AbstractPaymentManager] = None,
+):
     global server
     workers = multiprocessing.cpu_count()
     config = load_config(DEFAULT_ROOT_PATH, "config.yaml")
@@ -315,9 +324,21 @@ def start_pool_server(server_class=PoolServer,
     app.add_route(server.wrap_http_handler(server.index), "/")
     app.add_route(server.wrap_http_handler(server.get_pool_info), "/pool_info")
     app.add_route(server.wrap_http_handler(server.get_farmer), "/farmer")
-    app.add_route(server.wrap_http_handler(server.post_farmer), "/farmer", methods=["POST"], )
-    app.add_route(server.wrap_http_handler(server.put_farmer), "/farmer", methods=["PUT"], )
-    app.add_route(server.wrap_http_handler(server.post_partial), "/partial", methods=["POST"], )
+    app.add_route(
+        server.wrap_http_handler(server.post_farmer),
+        "/farmer",
+        methods=["POST"],
+    )
+    app.add_route(
+        server.wrap_http_handler(server.put_farmer),
+        "/farmer",
+        methods=["PUT"],
+    )
+    app.add_route(
+        server.wrap_http_handler(server.post_partial),
+        "/partial",
+        methods=["POST"],
+    )
     app.add_route(server.wrap_http_handler(server.get_login), "/login")
     ssl_context = get_ssl_context(server.pool_config)
     app.run(

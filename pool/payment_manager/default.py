@@ -47,9 +47,9 @@ class DefaultPaymentManager(AbstractPaymentManager):
         self.max_additions_per_transaction = self._pool_config["max_additions_per_transaction"]
 
         self.default_target_puzzle_hash: bytes32 = bytes32(
-            decode_puzzle_hash(self._pool_config["default_target_address"]))
-        self.pps_target_puzzle_hash: bytes32 = bytes32(
-            decode_puzzle_hash(self._pool_config["pps_target_address"]))
+            decode_puzzle_hash(self._pool_config["default_target_address"])
+        )
+        self.pps_target_puzzle_hash: bytes32 = bytes32(decode_puzzle_hash(self._pool_config["pps_target_address"]))
         self.pps_wallet_address = self._pool_config["pps_target_address"]
 
         self.pplns_fee = self._pool_config["pplns_fee"]
@@ -209,12 +209,13 @@ class DefaultPaymentManager(AbstractPaymentManager):
                             # Save transaction to records in DB
                             try:
                                 for coin_record in ph_to_coins[rec.p2_singleton_puzzle_hash]:
-                                    await self._store.add_pool_block(coin_record.coin.name(),
-                                                                     rec.pps_enabled,
-                                                                     float(coin_record.coin.amount / 1000000000000),
-                                                                     rec.launcher_id,
-                                                                     int(coin_record.confirmed_block_index),
-                                                                     )
+                                    await self._store.add_pool_block(
+                                        coin_record.coin.name(),
+                                        rec.pps_enabled,
+                                        float(coin_record.coin.amount / 1000000000000),
+                                        rec.launcher_id,
+                                        int(coin_record.confirmed_block_index),
+                                    )
                                 self._logger.info(f"Successfully added blocks to Database")
                             except Exception as e:
                                 self._logger.error(f"Error adding blocks to database: {e}")
@@ -227,8 +228,10 @@ class DefaultPaymentManager(AbstractPaymentManager):
                         else:
                             self._logger.error(f"Error submitting transaction: {push_tx_response}")
                 if pps_payment_amount != 0:
-                    additions_sub_list: Dict = {"puzzle_hash": self.pps_target_puzzle_hash,
-                                                "amount": pps_payment_amount}
+                    additions_sub_list: Dict = {
+                        "puzzle_hash": self.pps_target_puzzle_hash,
+                        "amount": pps_payment_amount,
+                    }
                     self._logger.info(f"Will make payments to pps wallet : {additions_sub_list}")
                     await self.send_to_pps.put(additions_sub_list.copy())
                     self._logger.info(f"Successfully added PPS Wallet payment to queue.")
@@ -284,13 +287,16 @@ class DefaultPaymentManager(AbstractPaymentManager):
                         await self.send_to_pps.put(pps_payment)  # put back if we dont have enough chia.
                         self._logger.info(
                             f"Do not have enough funds to distribute: {total_amount_claimed / (10 ** 12)}, "
-                            f"skipping payout")
+                            f"skipping payout"
+                        )
                         await asyncio.sleep(10)
                     continue  # restart loop.
 
                 if total_amount_claimed < calculate_pool_reward(uint32(1)):  # 1.75 XCH
-                    self._logger.info(f"Do not have enough funds to distribute: {total_amount_claimed / (10 ** 12)}, "
-                                      f"skipping payout")
+                    self._logger.info(
+                        f"Do not have enough funds to distribute: {total_amount_claimed / (10 ** 12)}, "
+                        f"skipping payout"
+                    )
                     await asyncio.sleep(10)
                     continue
 
@@ -301,8 +307,9 @@ class DefaultPaymentManager(AbstractPaymentManager):
                 async with self._store.lock:
                     # Get the points of each farmer, as well as payout instructions. Here a chia address is used,
                     # but other blockchain addresses can also be used.
-                    points_and_ph: dict[bytes, uint64] = \
-                        await self._store.get_farmer_points_and_payout_instructions(self.pplns_n_value)
+                    points_and_ph: dict[bytes, uint64] = await self._store.get_farmer_points_and_payout_instructions(
+                        self.pplns_n_value
+                    )
                     total_points = sum(points_and_ph.values())
                     if total_points > 0:
                         mojo_per_point = floor(amount_to_distribute / total_points)
@@ -376,12 +383,13 @@ class DefaultPaymentManager(AbstractPaymentManager):
                             self._logger.error(f"Error adding payouts to database: {e}")
 
                         while (
-                                not transaction.confirmed
-                                or not (
-                                               peak_height - transaction.confirmed_at_height) > self.confirmation_security_threshold
+                            not transaction.confirmed
+                            or not (peak_height - transaction.confirmed_at_height)
+                            > self.confirmation_security_threshold
                         ):
-                            transaction = await self._wallet_rpc_client.get_transaction(self.wallet_id,
-                                                                                        transaction.name)
+                            transaction = await self._wallet_rpc_client.get_transaction(
+                                self.wallet_id, transaction.name
+                            )
                             peak_height = self._state_keeper.blockchain_state["peak"].height
                             self._logger.info(
                                 f"Waiting for transaction to obtain {self.confirmation_security_threshold} confirmations"
@@ -410,4 +418,3 @@ class DefaultPaymentManager(AbstractPaymentManager):
                 # TODO(pool): retry transaction if failed
                 self._logger.error(f"Unexpected error in submit_payment_loop: {e}")
                 await asyncio.sleep(60)
-

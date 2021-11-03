@@ -43,7 +43,7 @@ class MySQLPoolStore(AbstractPoolStore):
             )
         except pymysql.err.OperationalError as e:
             self.log.error("Error In Database Config. Check your config file! %s", e)
-            raise ConnectionError('Unable to Connect to SQL Database.')
+            raise ConnectionError("Unable to Connect to SQL Database.")
         connection = await self.pool.acquire()
         cursor = await connection.cursor()
         await cursor.execute(
@@ -78,6 +78,7 @@ class MySQLPoolStore(AbstractPoolStore):
             "payout_instructions VARCHAR(256),"
             "accept_time DATETIME(6),"
             "pps boolean,"
+            "stale boolean DEFAULT 0,"
             "FOREIGN KEY (launcher_id) REFERENCES farmer(launcher_id),"
             "index (timestamp), index (launcher_id))"
         )
@@ -94,7 +95,6 @@ class MySQLPoolStore(AbstractPoolStore):
                 "confirmed bool,"
                 "FOREIGN KEY (launcher_id) REFERENCES farmer(launcher_id),"
                 "index (launcher_id))"
-
             )
         )
         await cursor.execute(
@@ -139,9 +139,9 @@ class MySQLPoolStore(AbstractPoolStore):
             await cursor.execute(
                 f"INSERT INTO farmer (launcher_id,p2_singleton_puzzle_hash,delay_time,delay_puzzle_hash,"
                 f"authentication_public_key,singleton_tip,singleton_tip_state,points,difficulty,payout_instructions,"
-                f"is_pool_member) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) " 
+                f"is_pool_member) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
                 f"ON DUPLICATE KEY UPDATE p2_singleton_puzzle_hash=%s, delay_time=%s, delay_puzzle_hash=%s,"
-                f"authentication_public_key=%s, singleton_tip=%s, singleton_tip_state=%s, payout_instructions=%s, " 
+                f"authentication_public_key=%s, singleton_tip=%s, singleton_tip_state=%s, payout_instructions=%s, "
                 f"is_pool_member=%s",
                 (
                     farmer_record.launcher_id.hex(),
@@ -171,9 +171,7 @@ class MySQLPoolStore(AbstractPoolStore):
         # TODO(pool): use cache
         with (await self.pool) as connection:
             cursor = await connection.cursor()
-            await cursor.execute(
-                f"SELECT * FROM farmer WHERE launcher_id=%s", (launcher_id.hex())
-            )
+            await cursor.execute(f"SELECT * FROM farmer WHERE launcher_id=%s", (launcher_id.hex()))
             row = await cursor.fetchone()
             if row is None:
                 return None
@@ -188,11 +186,11 @@ class MySQLPoolStore(AbstractPoolStore):
             await connection.commit()
 
     async def update_singleton(
-            self,
-            launcher_id: bytes32,
-            singleton_tip: CoinSpend,
-            singleton_tip_state: PoolState,
-            is_pool_member: bool,
+        self,
+        launcher_id: bytes32,
+        singleton_tip: CoinSpend,
+        singleton_tip_state: PoolState,
+        is_pool_member: bool,
     ):
         if is_pool_member:
             entry = (bytes(singleton_tip), bytes(singleton_tip_state), 1, launcher_id.hex())
@@ -236,8 +234,10 @@ class MySQLPoolStore(AbstractPoolStore):
         with (await self.pool) as connection:
             cursor = await connection.cursor()
             await cursor.execute(
-                f"SELECT difficulty, payout_instructions, accept_time FROM partial WHERE pps=0 ORDER BY accept_time "
-                f"DESC LIMIT %s", (pplns_n_value))
+                f"SELECT difficulty, payout_instructions, accept_time FROM partial WHERE pps=0 AND stale=0 ORDER BY accept_time "
+                f"DESC LIMIT %s",
+                (pplns_n_value),
+            )
             rows = await cursor.fetchall()
             await cursor.close()
             res: dict[bytes32, uint64] = {}
@@ -277,20 +277,29 @@ class MySQLPoolStore(AbstractPoolStore):
             await connection.commit()
             await cursor.close()
 
-    async def add_partial(self, launcher_id: bytes32, harvester_id: bytes32, timestamp: uint64, difficulty: uint64,
-                          payout_instructions: str, pps: int):
-        with (await self.pool) as connection:
-            cursor = await connection.cursor()
-            await cursor.execute("INSERT INTO partial VALUES(%s, %s, %s, %s, %s,SYSDATE(6),%s)",
-                                 (launcher_id.hex(), timestamp, difficulty, harvester_id.hex(), payout_instructions,
-                                  pps))
-            await connection.commit()
-            await cursor.close()
+    async def add_partial(
+        self,
+        launcher_id: bytes32,
+        harvester_id: bytes32,
+        timestamp: uint64,
+        difficulty: uint64,
+        payout_instructions: str,
+        pps: int,
+        stale: Optional[int] = 0,
+    ):
         with (await self.pool) as connection:
             cursor = await connection.cursor()
             await cursor.execute(
+                "INSERT INTO partial VALUES(%s, %s, %s, %s, %s,SYSDATE(6),%s,%s)",
+                (launcher_id.hex(), timestamp, difficulty, harvester_id.hex(), payout_instructions, pps, stale),
+            )
+            await connection.commit()
+            await cursor.close()
+        if stale == 0:
+            cursor = await connection.cursor()
+            await cursor.execute(
                 f"UPDATE farmer set overall_points=overall_points+%s, points=points+%s where launcher_id=%s",
-                (difficulty, difficulty, launcher_id.hex())
+                (difficulty, difficulty, launcher_id.hex()),
             )
             await connection.commit()
             await cursor.close()
@@ -303,23 +312,27 @@ class MySQLPoolStore(AbstractPoolStore):
                 (launcher_id.hex(), count),
             )
             rows = await cursor.fetchall()
-            ret: List[Tuple[uint64, uint64]] = [(uint64(timestamp), uint64(difficulty)) for timestamp, difficulty in
-                                                rows]
+            ret: List[Tuple[uint64, uint64]] = [
+                (uint64(timestamp), uint64(difficulty)) for timestamp, difficulty in rows
+            ]
             return ret
 
-    async def add_payouts(self, block_confirmed: int, payment_targets: List[Dict], transaction_id: bytes32,
-                          pps: int) -> None:
+    async def add_payouts(
+        self, block_confirmed: int, payment_targets: List[Dict], transaction_id: bytes32, pps: int
+    ) -> None:
         with (await self.pool) as connection:
             for payment_target in payment_targets:
                 payout_instructions = payment_target["puzzle_hash"].hex()
                 payout: float = payment_target["amount"] / 1000000000000  # convert from mojo to chia
                 cursor = await connection.cursor()
                 if pps is 1:
-                    await cursor.execute(f"SELECT launcher_id from farmer where payout_instructions=%s",
-                                        (payout_instructions))
+                    await cursor.execute(
+                        f"SELECT launcher_id from farmer where payout_instructions=%s", (payout_instructions)
+                    )
                 else:
-                    await cursor.execute(f"SELECT launcher_id from partial where payout_instructions=%s",
-                                        (payout_instructions))
+                    await cursor.execute(
+                        f"SELECT launcher_id from partial where payout_instructions=%s", (payout_instructions)
+                    )
                 row = await cursor.fetchone()
                 await cursor.close()
                 if row is not None:  # launcher_id not in db. Probably just the fee address.
@@ -330,40 +343,46 @@ class MySQLPoolStore(AbstractPoolStore):
                         f"INSERT INTO payments(payout_time,block_height,transaction_id,launcher_id,payout_instructions,"
                         f"payout,pps,confirmed) "
                         f"VALUES(SYSDATE(6),%s,%s,%s,%s,%s,%s,0)",
-                        (block_confirmed, transaction_id.hex(), launcher_id, payout_instructions, payout, pps)
+                        (block_confirmed, transaction_id.hex(), launcher_id, payout_instructions, payout, pps),
                     )
                     await connection.commit()
                     await cursor.close()
                     cursor = await connection.cursor()
-                    await cursor.execute(f"UPDATE farmer SET xch_paid=xch_paid+%s WHERE launcher_id=%s",
-                                         (payout, launcher_id))
+                    await cursor.execute(
+                        f"UPDATE farmer SET xch_paid=xch_paid+%s WHERE launcher_id=%s", (payout, launcher_id)
+                    )
                     await connection.commit()
 
     async def confirm_payouts(self, transaction_id: bytes32, block_confirmed: int) -> None:
         with (await self.pool) as connection:
             cursor = await connection.cursor()
-            await cursor.execute("UPDATE payments SET confirmed = 1, block_height = %s WHERE transaction_id= %s",
-                                 (block_confirmed, transaction_id.hex()))
+            await cursor.execute(
+                "UPDATE payments SET confirmed = 1, block_height = %s WHERE transaction_id= %s",
+                (block_confirmed, transaction_id.hex()),
+            )
             await connection.commit()
             await cursor.close()
 
     async def get_payment_system(self, launcher_id: bytes32):
         with (await self.pool) as connection:
             cursor = await connection.cursor()
-            await cursor.execute("SELECT pps_enabled,pps_change_datetime from farmer where launcher_id=%s",
-                                 (launcher_id.hex()))
+            await cursor.execute(
+                "SELECT pps_enabled,pps_change_datetime from farmer where launcher_id=%s", (launcher_id.hex())
+            )
             row = await cursor.fetchone()
             await cursor.close()
             result = [True if row[0] == 1 else False, row[1]]
             return result
 
-    async def add_pool_block(self, transaction_id: bytes32, pps: bool, amount: float, launcher_id: bytes32,
-                             block_height: int):
+    async def add_pool_block(
+        self, transaction_id: bytes32, pps: bool, amount: float, launcher_id: bytes32, block_height: int
+    ):
         with (await self.pool) as connection:
             cursor = await connection.cursor()
-            await cursor.execute("INSERT INTO blocks(timestamp,transaction_id,pps,amount,launcher_id,block_height)"
-                                 "VALUES(SYSDATE(6),%s,%s,%s,%s,%s) ON DUPLICATE KEY UPDATE transaction_id=%s",
-                                 (transaction_id.hex(), pps, amount, launcher_id.hex(), block_height,
-                                  transaction_id.hex()))
+            await cursor.execute(
+                "INSERT INTO blocks(timestamp,transaction_id,pps,amount,launcher_id,block_height)"
+                "VALUES(SYSDATE(6),%s,%s,%s,%s,%s) ON DUPLICATE KEY UPDATE transaction_id=%s",
+                (transaction_id.hex(), pps, amount, launcher_id.hex(), block_height, transaction_id.hex()),
+            )
             await connection.commit()
             await cursor.close()

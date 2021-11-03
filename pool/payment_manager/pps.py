@@ -40,8 +40,7 @@ class PPSPaymentManager(AbstractPaymentManager):
         # faster.
         self.max_additions_per_transaction = self._pool_config["max_additions_per_transaction"]
 
-        self.pps_target_puzzle_hash: bytes32 = bytes32(
-            decode_puzzle_hash(self._pool_config["pps_target_address"]))
+        self.pps_target_puzzle_hash: bytes32 = bytes32(decode_puzzle_hash(self._pool_config["pps_target_address"]))
         self.pps_wallet_address = self._pool_config["pps_target_address"]
 
         self.pps_fee = self._pool_config["pps_fee"]
@@ -102,11 +101,11 @@ class PPSPaymentManager(AbstractPaymentManager):
                 self._logger.warning("Not synced, waiting")
                 await asyncio.sleep(60)
             # convert bytes to TiB from network stats
-            netspace_tib = self._state_keeper.blockchain_state["space"] / 1.1e+12  # scientific notation
+            netspace_tib = self._state_keeper.blockchain_state["space"] / 1.1e12  # scientific notation
             # get mojo a day.
             xch_daily = 4608 * calculate_pool_reward(uint32(1))
             # get mojo per tib.
-            price_tib = (xch_daily / netspace_tib)
+            price_tib = xch_daily / netspace_tib
             self.pps_share_price = price_tib / 100  # price per share in mojo
             xch_per_point = self.pps_share_price / 1000000000000  # price per share in XCH
             self.points_for_min_payout = int(self.pps_min_payout / xch_per_point)
@@ -170,7 +169,8 @@ class PPSPaymentManager(AbstractPaymentManager):
                         if total_points * mojo_per_point > amount_to_distribute:
                             self._logger.info(
                                 f"Do not have enough pps funds to distribute: {total_amount_claimed / (10 ** 12)}, "
-                                "skipping payout")
+                                "skipping payout"
+                            )
                             await asyncio.sleep(self.pps_payment_interval)
                             continue
                         additions_sub_list: List[Dict] = [
@@ -243,12 +243,13 @@ class PPSPaymentManager(AbstractPaymentManager):
                             self._logger.error(f"Error adding pps payouts to database: {e}")
 
                         while (
-                                not transaction.confirmed
-                                or not (
-                                               peak_height - transaction.confirmed_at_height) > self.confirmation_security_threshold
+                            not transaction.confirmed
+                            or not (peak_height - transaction.confirmed_at_height)
+                            > self.confirmation_security_threshold
                         ):
-                            transaction = await self._wallet_rpc_client.get_transaction(self.pps_wallet_id,
-                                                                                        transaction.name)
+                            transaction = await self._wallet_rpc_client.get_transaction(
+                                self.pps_wallet_id, transaction.name
+                            )
                             peak_height = self._state_keeper.blockchain_state["peak"].height
                             self._logger.info(
                                 f"Waiting for pps transaction to obtain {self.confirmation_security_threshold} confirmations"

@@ -9,6 +9,7 @@ class StateKeeper:
     """
     Manager for a task periodically syncing the state of the blockchain and the wallet
     """
+
     def __init__(self, logger, wallet_fingerprint):
         self._logger = logger
         self._node_rpc_client: Optional[FullNodeRpcClient] = None

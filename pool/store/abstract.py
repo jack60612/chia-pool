@@ -43,11 +43,11 @@ class AbstractPoolStore(ABC):
 
     @abstractmethod
     async def update_singleton(
-            self,
-            launcher_id: bytes32,
-            singleton_tip: CoinSpend,
-            singleton_tip_state: PoolState,
-            is_pool_member: bool,
+        self,
+        launcher_id: bytes32,
+        singleton_tip: CoinSpend,
+        singleton_tip_state: PoolState,
+        is_pool_member: bool,
     ):
         """Update Farmer's singleton-related data"""
 
@@ -66,13 +66,22 @@ class AbstractPoolStore(ABC):
     @abstractmethod
     async def clear_pps_points(self, min_points: int) -> None:
         """Reset all PPS Farmers' points to 0 that are above the set limit"""
+
     @abstractmethod
     async def get_pps_farmer_points_and_payout_instructions(self, min_points: int) -> List[Tuple[uint64, bytes32]]:
         """Fetch pps farmers and their respective payout instructions that are above the set points limit"""
 
     @abstractmethod
-    async def add_partial(self, launcher_id: bytes32, harvester_id: bytes32, timestamp: uint64, difficulty: uint64,
-                          payout_instructions: str, pps: int):
+    async def add_partial(
+        self,
+        launcher_id: bytes32,
+        harvester_id: bytes32,
+        timestamp: uint64,
+        difficulty: uint64,
+        payout_instructions: str,
+        pps: int,
+        stale: Optional[int] = 0,
+    ):
         """Register new partial and update corresponding Farmer's points"""
 
     @abstractmethod
@@ -80,8 +89,9 @@ class AbstractPoolStore(ABC):
         """Fetch last ``count`` partials for Farmer identified by ``launcher_id``"""
 
     @abstractmethod
-    async def add_payouts(self, block_confirmed: int, payment_targets: List[Dict], transaction_id: bytes32,
-                          pps: int) -> None:
+    async def add_payouts(
+        self, block_confirmed: int, payment_targets: List[Dict], transaction_id: bytes32, pps: int
+    ) -> None:
         """Add new payout records for given Farmer & Register Payouts to farmers in DB"""
 
     @abstractmethod
@@ -91,7 +101,9 @@ class AbstractPoolStore(ABC):
     @abstractmethod
     async def get_payment_system(self, launcher_id: bytes32):
         """Get Current payment system status for a launcher_id"""
+
     @abstractmethod
-    async def add_pool_block(self, transaction_id: bytes32, pps: bool, amount: float, launcher_id: bytes32,
-                             block_height: int):
-        """Add block that was won by the pool to the db. """
+    async def add_pool_block(
+        self, transaction_id: bytes32, pps: bool, amount: float, launcher_id: bytes32, block_height: int
+    ):
+        """Add block that was won by the pool to the db."""
