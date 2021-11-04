@@ -1,10 +1,10 @@
 To update from upstream refer to https://gist.github.com/0xjac/85097472043b697ab57ba1b1c7530274
 ## DB EVENTS
-CREATE EVENT update_sec_points ON SCHEDULE EVERY 10 MINUTE DO UPDATE farmer JOIN (SELECT SUM(partial.difficulty) AS totalPoints, partial.launcher_id, partial.pps FROM partial GROUP BY partial.launcher_id) AS pointTotals ON farmer.launcher_id = pointTotals.launcher_id SET farmer.points = pointTotals.totalPoints WHERE partial.pps=0;
+CREATE EVENT update_sec_points ON SCHEDULE EVERY 10 MINUTE DO UPDATE farmer JOIN (SELECT SUM(partial.difficulty) AS totalPoints, partial.launcher_id, partial.pps FROM partial WHERE stale=0 GROUP BY partial.launcher_id) AS pointTotals ON farmer.launcher_id = pointTotals.launcher_id SET farmer.points = pointTotals.totalPoints WHERE partial.pps=0;
 
 CREATE EVENT remove_old_points ON SCHEDULE EVERY 1 MINUTE DO DELETE FROM partial WHERE partial.pps=0 AND accept_time < (DATE_SUB(SYSDATE(), INTERVAL 1 DAY));
 
-CREATE EVENT remove_points_from_old_users ON SCHEDULE EVERY 1 HOUR DO UPDATE farmer JOIN (SELECT farmer.launcher_id, farmer.pps_enabled FROM farmer LEFT JOIN partial ON partial.launcher_id = farmer.launcher_id WHERE partial.launcher_id IS NULL and farmer.pps_enabled = 0 ) AS emptyFarmers ON farmer.launcher_id = emptyFarmers.launcher_id SET farmer.points = 0;
+CREATE EVENT remove_points_from_old_users ON SCHEDULE EVERY 1 HOUR DO UPDATE farmer JOIN (SELECT farmer.launcher_id, farmer.pps_enabled FROM farmer LEFT JOIN partial ON partial.launcher_id = farmer.launcher_id WHERE partial.launcher_id IS NULL AND farmer.pps_enabled = 0 AND partial.stale=0 ) AS emptyFarmers ON farmer.launcher_id = emptyFarmers.launcher_id SET farmer.points = 0;
 
 CREATE EVENT update_farmer_blocks ON SCHEDULE EVERY 10 MINUTE DO UPDATE farmer JOIN (SELECT COUNT(blocks.block_height) AS totalBlocks, blocks.launcher_id FROM blocks GROUP BY blocks.launcher_id) AS blockTotals ON farmer.launcher_id = blockTotals.launcher_id SET farmer.blocks = blockTotals.totalBlocks;
 ## Pool Reference V1
