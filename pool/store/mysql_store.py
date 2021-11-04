@@ -308,7 +308,8 @@ class MySQLPoolStore(AbstractPoolStore):
         with (await self.pool) as connection:
             cursor = await connection.cursor()
             await cursor.execute(
-                "SELECT timestamp, difficulty from partial WHERE launcher_id=%s ORDER BY timestamp DESC LIMIT %s",
+                "SELECT timestamp, difficulty from partial WHERE launcher_id=%s AND stale=0 "
+                "ORDER BY timestamp DESC LIMIT %s",
                 (launcher_id.hex(), count),
             )
             rows = await cursor.fetchall()
