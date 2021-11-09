@@ -4,7 +4,7 @@ import pathlib
 import time
 import traceback
 from asyncio import Task
-from typing import Dict, Optional, Tuple, Callable
+from typing import Dict, Optional, Tuple  # ,  Callable
 
 from blspy import AugSchemeMPL, G1Element
 from chia.pools.pool_wallet_info import PoolState, PoolSingletonState
@@ -38,7 +38,8 @@ from chia.pools.pool_puzzles import (
 )
 
 from .blockchain_state import StateKeeper
-from .difficulty_adjustment import get_new_difficulty
+
+# from .difficulty_adjustment import get_new_difficulty
 from .payment_manager.abstract import AbstractPaymentManager
 from .payment_manager.default import DefaultPaymentManager
 from .singleton import get_singleton_state, get_coin_spend
@@ -54,7 +55,7 @@ class Pool:
         pool_config: Dict,
         constants: ConsensusConstants,
         pool_store: Optional[AbstractPoolStore] = None,
-        difficulty_function: Callable = get_new_difficulty,
+        # difficulty_function: Callable = get_new_difficulty,
         payment_manager: Optional[DefaultPaymentManager] = None,
     ):
         self.follow_singleton_tasks: Dict[bytes32, asyncio.Task] = {}
@@ -105,7 +106,7 @@ class Pool:
         self.pool_url = pool_config["pool_url"]
         self.min_difficulty = uint64(pool_config["min_difficulty"])  # 10 difficulty is about 1 proof a day per plot
         self.default_difficulty: uint64 = uint64(pool_config["default_difficulty"])
-        self.difficulty_function: Callable = difficulty_function
+        # self.difficulty_function: Callable = difficulty_function
 
         self.pending_point_partials: Optional[asyncio.Queue] = None
         self.recent_points_added: LRUCache = LRUCache(20000)
@@ -144,6 +145,9 @@ class Pool:
 
         # config for rpc hostname
         self.rpc_hostname = pool_config["rpc_ip_address"]
+
+        # static difficulty config
+        self.static_difficulty: uint64 = uint64(pool_config["static_difficulty"])
 
         # check if we are supposed to connect to wallet
         self.wallet_enabled: bool = pool_config["wallet_enabled"]
@@ -615,14 +619,16 @@ class Pool:
                     partial.payload.launcher_id, self.number_of_partials_target
                 )
                 # Only update the difficulty if we meet certain conditions
-                new_difficulty: uint64 = self.difficulty_function(
-                    recent_partials,
-                    int(self.number_of_partials_target),
-                    int(self.time_target),
-                    current_difficulty,
-                    time_received_partial,
-                    self.min_difficulty,
-                )
+                # new_difficulty: uint64 = self.difficulty_function(
+                #    recent_partials,
+                #    int(self.number_of_partials_target),
+                #    int(self.time_target),
+                #    current_difficulty,
+                #    time_received_partial,
+                #    self.min_difficulty,
+                # )
+
+                new_difficulty: uint64 = self.static_difficulty
 
                 if current_difficulty != new_difficulty:
                     await self.store.update_difficulty(partial.payload.launcher_id, new_difficulty)
