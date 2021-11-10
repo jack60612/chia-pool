@@ -4,7 +4,7 @@ import pathlib
 import time
 import traceback
 from asyncio import Task
-from typing import Dict, Optional, Tuple  # ,  Callable
+from typing import Dict, Optional, Tuple,  Callable
 
 from blspy import AugSchemeMPL, G1Element
 from chia.pools.pool_wallet_info import PoolState, PoolSingletonState
@@ -39,7 +39,7 @@ from chia.pools.pool_puzzles import (
 
 from .blockchain_state import StateKeeper
 
-# from .difficulty_adjustment import get_new_difficulty
+from .difficulty_adjustment import get_new_difficulty
 from .payment_manager.abstract import AbstractPaymentManager
 from .payment_manager.default import DefaultPaymentManager
 from .singleton import get_singleton_state, get_coin_spend
@@ -55,7 +55,7 @@ class Pool:
         pool_config: Dict,
         constants: ConsensusConstants,
         pool_store: Optional[AbstractPoolStore] = None,
-        # difficulty_function: Callable = get_new_difficulty,
+        difficulty_function: Callable = get_new_difficulty,
         payment_manager: Optional[DefaultPaymentManager] = None,
     ):
         self.follow_singleton_tasks: Dict[bytes32, asyncio.Task] = {}
