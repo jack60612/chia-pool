@@ -7,6 +7,11 @@ CREATE EVENT remove_old_points ON SCHEDULE EVERY 1 MINUTE DO DELETE FROM partial
 CREATE EVENT remove_points_from_old_users ON SCHEDULE EVERY 1 HOUR DO UPDATE farmer JOIN (SELECT farmer.launcher_id, farmer.pps_enabled FROM farmer LEFT JOIN partial ON partial.launcher_id = farmer.launcher_id WHERE partial.launcher_id IS NULL AND farmer.pps_enabled = 0 AND partial.stale=0 ) AS emptyFarmers ON farmer.launcher_id = emptyFarmers.launcher_id SET farmer.points = 0;
 
 CREATE EVENT update_farmer_blocks ON SCHEDULE EVERY 10 MINUTE DO UPDATE farmer JOIN (SELECT COUNT(blocks.block_height) AS totalBlocks, blocks.launcher_id FROM blocks GROUP BY blocks.launcher_id) AS blockTotals ON farmer.launcher_id = blockTotals.launcher_id SET farmer.blocks = blockTotals.totalBlocks;
+
+CREATE EVENT save_farmer_hourly_average ON SCHEDULE EVERY 1 HOUR DO INSERT INTO farmer_average SELECT launcher_id, SYSDATE(), AVG(difficulty) as points FROM partial WHERE stale = 0 AND invalid = 0 AND FROM_UNIXTIME(timestamp) >= DATE_SUB(NOW(), INTERVAL 1 HOUR) GROUP BY timestamp;
+
+CREATE EVENT delete_old_farmer_hourly_average ON SCHEDULE EVERY 1 DAY DO DELETE FROM farmer_average WHERE timestamp < (DATE_SUB(SYSDATE(), INTERVAL 1 MONTH));
+
 ## Pool Reference V1
 This code is provided under the Apache 2.0 license.
 Note: the draft specification is in the SPECIFICATION.md file.
