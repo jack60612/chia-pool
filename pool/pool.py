@@ -613,11 +613,11 @@ class Pool:
             # Obtains the new record in case we just updated difficulty
             farmer_record: Optional[FarmerRecord] = await self.store.get_farmer_record(partial.payload.launcher_id)
             if farmer_record is not None:
-                current_difficulty = farmer_record.difficulty
+                #current_difficulty = farmer_record.difficulty
                 # Decide whether to update the difficulty
-                recent_partials = await self.store.get_recent_partials(
-                    partial.payload.launcher_id, self.number_of_partials_target
-                )
+                #recent_partials = await self.store.get_recent_partials(
+                #    partial.payload.launcher_id, self.number_of_partials_target
+                #)
                 # Only update the difficulty if we meet certain conditions
                 # new_difficulty: uint64 = self.difficulty_function(
                 #    recent_partials,
