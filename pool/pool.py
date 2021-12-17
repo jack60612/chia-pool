@@ -50,13 +50,13 @@ from .util import error_dict, RequestMetadata
 
 class Pool:
     def __init__(
-        self,
-        config: Dict,
-        pool_config: Dict,
-        constants: ConsensusConstants,
-        pool_store: Optional[AbstractPoolStore] = None,
-        difficulty_function: Callable = get_new_difficulty,
-        payment_manager: Optional[DefaultPaymentManager] = None,
+            self,
+            config: Dict,
+            pool_config: Dict,
+            constants: ConsensusConstants,
+            pool_store: Optional[AbstractPoolStore] = None,
+            difficulty_function: Callable = get_new_difficulty,
+            payment_manager: Optional[DefaultPaymentManager] = None,
     ):
         self.follow_singleton_tasks: Dict[bytes32, asyncio.Task] = {}
         # logging config
@@ -211,6 +211,19 @@ class Pool:
         await self.node_rpc_client.await_closed()
         await self.store.close()
 
+    async def add_partial_to_db(self, farmer_record, partial, points_received, stale, invalid):
+        if farmer_record.is_pool_member:
+            await self.store.add_partial(
+                partial.payload.launcher_id,
+                partial.payload.harvester_id,
+                uint64(int(time.time())),
+                points_received,
+                farmer_record.payout_instructions,
+                pps=1 if farmer_record.pps_enabled else 0,
+                stale=stale,
+                invalid=invalid,
+            )
+
     async def confirm_partials_loop(self):
         """
         Pulls things from the queue of partials one at a time, and adjusts balances.
@@ -276,35 +289,15 @@ class Pool:
                 farmer_record: Optional[FarmerRecord] = await self.store.get_farmer_record(partial.payload.launcher_id)
 
                 assert (
-                    partial.payload.proof_of_space.pool_contract_puzzle_hash == farmer_record.p2_singleton_puzzle_hash
+                        partial.payload.proof_of_space.pool_contract_puzzle_hash == farmer_record.p2_singleton_puzzle_hash
                 )
-
-                if farmer_record.is_pool_member:
-                    if farmer_record.pps_enabled:
-                        await self.store.add_partial(
-                            partial.payload.launcher_id,
-                            partial.payload.harvester_id,
-                            uint64(int(time.time())),
-                            points_received,
-                            farmer_record.payout_instructions,
-                            pps=1,
-                            stale=stale,
-                        )
-                    else:
-                        await self.store.add_partial(
-                            partial.payload.launcher_id,
-                            partial.payload.harvester_id,
-                            uint64(int(time.time())),
-                            points_received,
-                            farmer_record.payout_instructions,
-                            pps=0,
-                            stale=stale,
-                        )
-                    self.log.info(
-                        f"Farmer pps:{farmer_record.pps_enabled} {farmer_record.launcher_id}/"
-                        f"{partial.payload.harvester_id} updated points to: "
-                        f"{farmer_record.points + points_received}"
-                    )
+                await self.add_partial_to_db(farmer_record, partial, points_received, stale, invalid=0)
+                
+                self.log.info(
+                    f"Farmer pps:{farmer_record.pps_enabled} {farmer_record.launcher_id}/"
+                    f"{partial.payload.harvester_id} updated points to: "
+                    f"{farmer_record.points + points_received}"
+                )
         except Exception as e:
             error_stack = traceback.format_exc()
             self.log.error(f"Exception in confirming partial: {e} {error_stack}")
@@ -330,8 +323,8 @@ class Pool:
                 return error_dict(PoolErrorCode.INVALID_SINGLETON, f"Singleton is not assigned to this pool")
 
             if (
-                request.payload.suggested_difficulty is None
-                or request.payload.suggested_difficulty < self.min_difficulty
+                    request.payload.suggested_difficulty is None
+                    or request.payload.suggested_difficulty < self.min_difficulty
             ):
                 difficulty: uint64 = self.default_difficulty
             else:
@@ -415,9 +408,9 @@ class Pool:
 
         if request.payload.payout_instructions is not None:
             is_new_value = (
-                farmer_record.payout_instructions != request.payload.payout_instructions
-                and request.payload.payout_instructions is not None
-                and len(hexstr_to_bytes(request.payload.payout_instructions)) == 32
+                    farmer_record.payout_instructions != request.payload.payout_instructions
+                    and request.payload.payout_instructions is not None
+                    and len(hexstr_to_bytes(request.payload.payout_instructions)) == 32
             )
             response_dict["payout_instructions"] = is_new_value
             if is_new_value:
@@ -425,9 +418,9 @@ class Pool:
 
         if request.payload.suggested_difficulty is not None:
             is_new_value = (
-                farmer_record.difficulty != request.payload.suggested_difficulty
-                and request.payload.suggested_difficulty is not None
-                and request.payload.suggested_difficulty >= self.min_difficulty
+                    farmer_record.difficulty != request.payload.suggested_difficulty
+                    and request.payload.suggested_difficulty is not None
+                    and request.payload.suggested_difficulty >= self.min_difficulty
             )
             response_dict["suggested_difficulty"] = is_new_value
             if is_new_value:
@@ -447,7 +440,7 @@ class Pool:
         return response_dict
 
     async def get_and_validate_singleton_state(
-        self, launcher_id: bytes32
+            self, launcher_id: bytes32
     ) -> Optional[Tuple[CoinSpend, PoolState, bool]]:
         """
         :return: the state of the singleton, if it currently exists in the blockchain, and if it is assigned to
@@ -505,8 +498,8 @@ class Pool:
             )
             assert coin_record is not None
             if (
-                self.state_keeper.blockchain_state["peak"].height - coin_record.confirmed_block_index
-                > self.relative_lock_height
+                    self.state_keeper.blockchain_state["peak"].height - coin_record.confirmed_block_index
+                    > self.relative_lock_height
             ):
                 self.log.info(f"launcher_id {launcher_id} got enough confirmations to leave the pool")
                 is_pool_member = False
@@ -514,8 +507,8 @@ class Pool:
         self.log.info(f"Is {launcher_id} pool member: {is_pool_member}")
 
         if farmer_rec is not None and (
-            farmer_rec.singleton_tip != buried_singleton_tip
-            or farmer_rec.singleton_tip_state != buried_singleton_tip_state
+                farmer_rec.singleton_tip != buried_singleton_tip
+                or farmer_rec.singleton_tip_state != buried_singleton_tip_state
         ):
             # This means the singleton has been changed in the blockchain (either by us or someone else). We
             # still keep track of this singleton if the farmer has changed to a different pool, in case they
@@ -528,10 +521,10 @@ class Pool:
         return buried_singleton_tip, buried_singleton_tip_state, is_pool_member
 
     async def process_partial(
-        self,
-        partial: PostPartialRequest,
-        farmer_record: FarmerRecord,
-        time_received_partial: uint64,
+            self,
+            partial: PostPartialRequest,
+            farmer_record: FarmerRecord,
+            time_received_partial: uint64,
     ) -> Dict:
         # Validate signatures
         message: bytes32 = partial.payload.get_hash()
@@ -539,12 +532,14 @@ class Pool:
         pk2: G1Element = farmer_record.authentication_public_key
         valid_sig = AugSchemeMPL.aggregate_verify([pk1, pk2], [message, message], partial.aggregate_signature)
         if not valid_sig:
+            await self.add_partial_to_db(farmer_record, partial, farmer_record.difficulty, stale=0, invalid=1)
             return error_dict(
                 PoolErrorCode.INVALID_SIGNATURE,
                 f"The aggregate signature is invalid {partial.aggregate_signature}",
             )
 
         if partial.payload.proof_of_space.pool_contract_puzzle_hash != farmer_record.p2_singleton_puzzle_hash:
+            await self.add_partial_to_db(farmer_record, partial, farmer_record.difficulty, stale=0, invalid=1)
             return error_dict(
                 PoolErrorCode.INVALID_P2_SINGLETON_PUZZLE_HASH,
                 f"Invalid pool contract puzzle hash {partial.payload.proof_of_space.pool_contract_puzzle_hash}",
@@ -563,6 +558,7 @@ class Pool:
             response = await get_signage_point_or_eos()
 
         if response is None or response["reverted"]:
+            await self.add_partial_to_db(farmer_record, partial, farmer_record.difficulty, stale=0, invalid=1)
             return error_dict(
                 PoolErrorCode.NOT_FOUND, f"Did not find signage point or EOS {partial.payload.sp_hash}, {response}"
             )
@@ -572,6 +568,7 @@ class Pool:
         end_of_sub_slot: Optional[EndOfSubSlotBundle] = response.get("eos", None)
 
         if time_received_partial - node_time_received_sp > self.partial_time_limit:
+            await self.add_partial_to_db(farmer_record, partial, farmer_record.difficulty, stale=1, invalid=0)
             return error_dict(
                 PoolErrorCode.TOO_LATE,
                 f"Received partial in {time_received_partial - node_time_received_sp}. "
@@ -590,6 +587,7 @@ class Pool:
             self.constants, challenge_hash, partial.payload.sp_hash
         )
         if quality_string is None:
+            await self.add_partial_to_db(farmer_record, partial, farmer_record.difficulty, stale=0, invalid=1)
             return error_dict(PoolErrorCode.INVALID_PROOF, f"Invalid proof of space {partial.payload.sp_hash}")
 
         current_difficulty = farmer_record.difficulty
@@ -602,6 +600,7 @@ class Pool:
         )
 
         if required_iters >= self.iters_limit:
+            await self.add_partial_to_db(farmer_record, partial, farmer_record.difficulty, stale=0, invalid=1)
             return error_dict(
                 PoolErrorCode.PROOF_NOT_GOOD_ENOUGH,
                 f"Proof of space has required iters {required_iters}, too high for difficulty " f"{current_difficulty}",
@@ -613,11 +612,11 @@ class Pool:
             # Obtains the new record in case we just updated difficulty
             farmer_record: Optional[FarmerRecord] = await self.store.get_farmer_record(partial.payload.launcher_id)
             if farmer_record is not None:
-                #current_difficulty = farmer_record.difficulty
+                # current_difficulty = farmer_record.difficulty
                 # Decide whether to update the difficulty
-                #recent_partials = await self.store.get_recent_partials(
+                # recent_partials = await self.store.get_recent_partials(
                 #    partial.payload.launcher_id, self.number_of_partials_target
-                #)
+                # )
                 # Only update the difficulty if we meet certain conditions
                 # new_difficulty: uint64 = self.difficulty_function(
                 #    recent_partials,

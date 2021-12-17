@@ -79,6 +79,7 @@ class MySQLPoolStore(AbstractPoolStore):
             "accept_time DATETIME(6),"
             "pps boolean,"
             "stale boolean DEFAULT 0,"
+            "invalid boolean DEFAULT 0,"
             "FOREIGN KEY (launcher_id) REFERENCES farmer(launcher_id),"
             "index (timestamp), index (launcher_id))"
         )
@@ -110,6 +111,16 @@ class MySQLPoolStore(AbstractPoolStore):
                 "FOREIGN KEY (launcher_id) REFERENCES farmer(launcher_id))"
             )
         )
+        await cursor.execute(
+            (
+                "CREATE TABLE IF NOT EXISTS farmer_average("
+                "launcher_id VARCHAR(256),"
+                "timestamp DATETIME(6),"
+                "points bigint,"
+                "FOREIGN KEY (launcher_id) REFERENCES farmer(launcher_id))"
+            )
+        )
+
         await connection.commit()
         self.pool.release(connection)
 
@@ -237,7 +248,7 @@ class MySQLPoolStore(AbstractPoolStore):
             await cursor.execute(
                 f"SELECT partial.difficulty, farmer.payout_instructions, partial.accept_time, partial.launcher_id FROM partial "
                 f"INNER JOIN farmer ON partial.launcher_id=farmer.launcher_id WHERE partial.pps=0 "
-                f"AND partial.stale=0 ORDER BY partial.accept_time "
+                f"AND partial.stale=0 AND partial.invalid=0 ORDER BY partial.accept_time "
                 f"DESC LIMIT %s",
                 (pplns_n_value),
             )
@@ -289,16 +300,26 @@ class MySQLPoolStore(AbstractPoolStore):
         payout_instructions: str,
         pps: int,
         stale: Optional[int] = 0,
+        invalid: Optional[int] = 0,
     ):
         with (await self.pool) as connection:
             cursor = await connection.cursor()
             await cursor.execute(
-                "INSERT INTO partial VALUES(%s, %s, %s, %s, %s,SYSDATE(6),%s,%s)",
-                (launcher_id.hex(), timestamp, difficulty, harvester_id.hex(), payout_instructions, pps, stale),
+                "INSERT INTO partial VALUES(%s, %s, %s, %s, %s,SYSDATE(6),%s,%s,%s)",
+                (
+                    launcher_id.hex(),
+                    timestamp,
+                    difficulty,
+                    harvester_id.hex(),
+                    payout_instructions,
+                    pps,
+                    stale,
+                    invalid,
+                ),
             )
             await connection.commit()
             await cursor.close()
-        if stale == 0:
+        if stale == 0 and invalid == 0:
             cursor = await connection.cursor()
             await cursor.execute(
                 f"UPDATE farmer set overall_points=overall_points+%s, points=points+%s where launcher_id=%s",
@@ -311,7 +332,7 @@ class MySQLPoolStore(AbstractPoolStore):
         with (await self.pool) as connection:
             cursor = await connection.cursor()
             await cursor.execute(
-                "SELECT timestamp, difficulty from partial WHERE launcher_id=%s AND stale=0 "
+                "SELECT timestamp, difficulty from partial WHERE launcher_id=%s AND stale=0 AND invalid=0 "
                 "ORDER BY timestamp DESC LIMIT %s",
                 (launcher_id.hex(), count),
             )
@@ -393,7 +414,7 @@ class MySQLPoolStore(AbstractPoolStore):
                 "INSERT INTO blocks(record_timestamp,transaction_id,pps,amount,launcher_id,block_height,block_timestamp)"
                 "VALUES(SYSDATE(6),%s,%s,%s,%s,%s,%s) ON DUPLICATE KEY UPDATE transaction_id=%s",
                 (transaction_id.hex(), pps, amount, launcher_id.hex(), block_height, transaction_id.hex()),
-                block_timestamp
+                block_timestamp,
             )
             await connection.commit()
             await cursor.close()

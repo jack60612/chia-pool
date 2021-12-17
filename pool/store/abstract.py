@@ -81,6 +81,7 @@ class AbstractPoolStore(ABC):
         payout_instructions: str,
         pps: int,
         stale: Optional[int] = 0,
+        invalid: Optional[int] = 0,
     ):
         """Register new partial and update corresponding Farmer's points"""
 
