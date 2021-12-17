@@ -215,6 +215,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
                                         float(coin_record.coin.amount / 1000000000000),
                                         rec.launcher_id,
                                         int(coin_record.confirmed_block_index),
+                                        int(coin_record.timestamp),
                                     )
                                 self._logger.info(f"Successfully added blocks to Database")
                             except Exception as e:

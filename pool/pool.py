@@ -4,7 +4,7 @@ import pathlib
 import time
 import traceback
 from asyncio import Task
-from typing import Dict, Optional, Tuple,  Callable
+from typing import Dict, Optional, Tuple, Callable
 
 from blspy import AugSchemeMPL, G1Element
 from chia.pools.pool_wallet_info import PoolState, PoolSingletonState

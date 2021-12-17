@@ -104,6 +104,12 @@ class AbstractPoolStore(ABC):
 
     @abstractmethod
     async def add_pool_block(
-        self, transaction_id: bytes32, pps: bool, amount: float, launcher_id: bytes32, block_height: int
+        self,
+        transaction_id: bytes32,
+        pps: bool,
+        amount: float,
+        launcher_id: bytes32,
+        block_height: int,
+        block_timestamp: int,
     ):
         """Add block that was won by the pool to the db."""
