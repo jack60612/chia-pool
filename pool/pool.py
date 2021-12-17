@@ -292,7 +292,7 @@ class Pool:
                         partial.payload.proof_of_space.pool_contract_puzzle_hash == farmer_record.p2_singleton_puzzle_hash
                 )
                 await self.add_partial_to_db(farmer_record, partial, points_received, stale, invalid=0)
-                
+
                 self.log.info(
                     f"Farmer pps:{farmer_record.pps_enabled} {farmer_record.launcher_id}/"
                     f"{partial.payload.harvester_id} updated points to: "
