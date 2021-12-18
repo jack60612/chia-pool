@@ -141,15 +141,15 @@ class MySQLPoolStore(AbstractPoolStore):
             row[7],
             row[8],
             row[9],
-            True if row[10] == 1 else False,
-            True if row[14] == 1 else False,
+            row[10] == 1,
+            row[14] == 1,
         )
 
     async def add_farmer_record(self, farmer_record: FarmerRecord, metadata: RequestMetadata):
         with (await self.pool) as connection:
             cursor = await connection.cursor()
             await cursor.execute(
-                f"INSERT INTO farmer (launcher_id,p2_singleton_puzzle_hash,delay_time,delay_puzzle_hash,"
+                "INSERT INTO farmer (launcher_id,p2_singleton_puzzle_hash,delay_time,delay_puzzle_hash,"
                 f"authentication_public_key,singleton_tip,singleton_tip_state,points,difficulty,payout_instructions,"
                 f"is_pool_member) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
                 f"ON DUPLICATE KEY UPDATE p2_singleton_puzzle_hash=%s, delay_time=%s, delay_puzzle_hash=%s,"
@@ -183,7 +183,7 @@ class MySQLPoolStore(AbstractPoolStore):
         # TODO(pool): use cache
         with (await self.pool) as connection:
             cursor = await connection.cursor()
-            await cursor.execute(f"SELECT * FROM farmer WHERE launcher_id=%s", (launcher_id.hex()))
+            await cursor.execute("SELECT * FROM farmer WHERE launcher_id=%s", (launcher_id.hex()))
             row = await cursor.fetchone()
             if row is None:
                 return None
@@ -193,7 +193,7 @@ class MySQLPoolStore(AbstractPoolStore):
         with (await self.pool) as connection:
             cursor = await connection.cursor()
             await cursor.execute(
-                f"UPDATE farmer SET difficulty=%s WHERE launcher_id=%s", (difficulty, launcher_id.hex())
+                "UPDATE farmer SET difficulty=%s WHERE launcher_id=%s", (difficulty, launcher_id.hex())
             )
             await connection.commit()
 
@@ -211,7 +211,7 @@ class MySQLPoolStore(AbstractPoolStore):
         with (await self.pool) as connection:
             cursor = await connection.cursor()
             await cursor.execute(
-                f"UPDATE farmer SET singleton_tip=%s, singleton_tip_state=%s, is_pool_member=%s WHERE launcher_id=%s",
+                "UPDATE farmer SET singleton_tip=%s, singleton_tip_state=%s, is_pool_member=%s WHERE launcher_id=%s",
                 entry,
             )
             await connection.commit()
@@ -246,7 +246,7 @@ class MySQLPoolStore(AbstractPoolStore):
         with (await self.pool) as connection:
             cursor = await connection.cursor()
             await cursor.execute(
-                f"SELECT partial.difficulty, farmer.payout_instructions, partial.accept_time, partial.launcher_id FROM partial "
+                "SELECT partial.difficulty, farmer.payout_instructions, partial.accept_time, partial.launcher_id FROM partial "
                 f"INNER JOIN farmer ON partial.launcher_id=farmer.launcher_id WHERE partial.pps=0 "
                 f"AND partial.stale=0 AND partial.invalid=0 ORDER BY partial.accept_time "
                 f"DESC LIMIT %s",
@@ -267,7 +267,7 @@ class MySQLPoolStore(AbstractPoolStore):
     async def get_pps_farmer_points_and_payout_instructions(self, min_points: int) -> List[Tuple[uint64, bytes32]]:
         with (await self.pool) as connection:
             cursor = await connection.cursor()
-            await cursor.execute(f"SELECT points, payout_instructions FROM farmer WHERE points>=%s", (min_points))
+            await cursor.execute("SELECT points, payout_instructions FROM farmer WHERE points>=%s", (min_points))
             rows = await cursor.fetchall()
             await cursor.close()
             accumulated: Dict[bytes32, uint64] = {}
@@ -322,7 +322,7 @@ class MySQLPoolStore(AbstractPoolStore):
         if stale == 0 and invalid == 0:
             cursor = await connection.cursor()
             await cursor.execute(
-                f"UPDATE farmer set overall_points=overall_points+%s, points=points+%s where launcher_id=%s",
+                "UPDATE farmer set overall_points=overall_points+%s, points=points+%s where launcher_id=%s",
                 (difficulty, difficulty, launcher_id.hex()),
             )
             await connection.commit()
@@ -352,11 +352,11 @@ class MySQLPoolStore(AbstractPoolStore):
                 cursor = await connection.cursor()
                 if pps is 1:
                     await cursor.execute(
-                        f"SELECT launcher_id from farmer where payout_instructions=%s", (payout_instructions)
+                        "SELECT launcher_id from farmer where payout_instructions=%s", (payout_instructions)
                     )
                 else:
                     await cursor.execute(
-                        f"SELECT launcher_id from partial where payout_instructions=%s", (payout_instructions)
+                        "SELECT launcher_id from partial where payout_instructions=%s", (payout_instructions)
                     )
                 row = await cursor.fetchone()
                 await cursor.close()
@@ -365,7 +365,7 @@ class MySQLPoolStore(AbstractPoolStore):
                     cursor = await connection.cursor()
 
                     await cursor.execute(
-                        f"INSERT INTO payments(payout_time,block_height,transaction_id,launcher_id,payout_instructions,"
+                        "INSERT INTO payments(payout_time,block_height,transaction_id,launcher_id,payout_instructions,"
                         f"payout,pps,confirmed) "
                         f"VALUES(SYSDATE(6),%s,%s,%s,%s,%s,%s,0)",
                         (block_confirmed, transaction_id.hex(), launcher_id, payout_instructions, payout, pps),
@@ -374,7 +374,7 @@ class MySQLPoolStore(AbstractPoolStore):
                     await cursor.close()
                     cursor = await connection.cursor()
                     await cursor.execute(
-                        f"UPDATE farmer SET xch_paid=xch_paid+%s WHERE launcher_id=%s", (payout, launcher_id)
+                        "UPDATE farmer SET xch_paid=xch_paid+%s WHERE launcher_id=%s", (payout, launcher_id)
                     )
                     await connection.commit()
 
@@ -396,7 +396,7 @@ class MySQLPoolStore(AbstractPoolStore):
             )
             row = await cursor.fetchone()
             await cursor.close()
-            result = [True if row[0] == 1 else False, row[1]]
+            result = [row[0] == 1, row[1]]
             return result
 
     async def add_pool_block(
