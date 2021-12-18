@@ -217,14 +217,14 @@ class DefaultPaymentManager(AbstractPaymentManager):
                                         int(coin_record.confirmed_block_index),
                                         int(coin_record.timestamp),
                                     )
-                                self._logger.info(f"Successfully added blocks to Database")
+                                self._logger.info("Successfully added blocks to Database")
                             except Exception as e:
                                 self._logger.error(f"Error adding blocks to database: {e}")
                             # if it was farmed by a pps farmer then send to pps wallet.
                             if rec.pps_enabled is True:
-                                self._logger.info(f"Block was won by a pps farmer, adding amount to transaction.")
+                                self._logger.info("Block was won by a pps farmer, adding amount to transaction.")
                                 pps_payment_amount += ph_to_amounts[rec.p2_singleton_puzzle_hash]
-                                self._logger.info(f"Added PPS Wallet payment amount.")
+                                self._logger.info("Added PPS Wallet payment amount.")
 
                         else:
                             self._logger.error(f"Error submitting transaction: {push_tx_response}")
@@ -235,7 +235,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
                     }
                     self._logger.info(f"Will make payments to pps wallet : {additions_sub_list}")
                     await self.send_to_pps.put(additions_sub_list.copy())
-                    self._logger.info(f"Successfully added PPS Wallet payment to queue.")
+                    self._logger.info("Successfully added PPS Wallet payment to queue.")
 
                 await asyncio.sleep(self.collect_pool_rewards_interval)
             except asyncio.CancelledError:
@@ -379,7 +379,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
                         self._logger.info(f"Transaction: {transaction}")
                         try:
                             await self._store.add_payouts(0, payment_targets, transaction.name, 0)
-                            self._logger.info(f"Successfully added payouts to Database")
+                            self._logger.info("Successfully added payouts to Database")
                         except Exception as e:
                             self._logger.error(f"Error adding payouts to database: {e}")
 
@@ -406,7 +406,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
                         # add payouts to db
                         try:
                             await self._store.confirm_payouts(transaction.name, transaction.confirmed_at_height)
-                            self._logger.info(f"Payouts were marked confirmed in the Database ")
+                            self._logger.info("Payouts were marked confirmed in the Database ")
                         except Exception as e:
                             self._logger.error(f"Error marking payouts confirmed in the Database: {e}")
                 else:
