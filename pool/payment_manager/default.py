@@ -147,9 +147,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
                     ph_to_coins[cr.coin.puzzle_hash].append(cr)
 
                 # For each p2sph, get the FarmerRecords
-                farmer_records = await self._store.get_farmer_records_for_p2_singleton_phs(
-                    set(ph_to_amounts)
-                )
+                farmer_records = await self._store.get_farmer_records_for_p2_singleton_phs(set(ph_to_amounts))
 
                 # For each singleton, create, submit, and save a claim transaction
                 claimable_amounts = 0
