@@ -552,8 +552,7 @@ class Pool:
         async def get_signage_point_or_eos():
             if partial.payload.end_of_sub_slot:
                 return await self.node_rpc_client.get_recent_signage_point_or_eos(None, partial.payload.sp_hash)
-            else:
-                return await self.node_rpc_client.get_recent_signage_point_or_eos(partial.payload.sp_hash, None)
+            return await self.node_rpc_client.get_recent_signage_point_or_eos(partial.payload.sp_hash, None)
 
         response = await get_signage_point_or_eos()
         if response is None:
