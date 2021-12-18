@@ -148,7 +148,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
 
                 # For each p2sph, get the FarmerRecords
                 farmer_records = await self._store.get_farmer_records_for_p2_singleton_phs(
-                    set(ph for ph in ph_to_amounts)
+                    {ph for ph in ph_to_amounts}
                 )
 
                 # For each singleton, create, submit, and save a claim transaction
