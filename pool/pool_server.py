@@ -184,7 +184,7 @@ class PoolServer:
             scheme=request_obj.scheme,
             headers=request_obj.headers,
             cookies=dict(request_obj.cookies),
-            query=dict({key: value[0] for (key, value) in request_obj.args.items()}),
+            query={key: value[0] for (key, value) in request_obj.args.items()},
             remote=request_obj.remote_addr,
         )
 
