@@ -141,8 +141,8 @@ class MySQLPoolStore(AbstractPoolStore):
             row[7],
             row[8],
             row[9],
-            True if row[10] == 1 else False,
-            True if row[14] == 1 else False,
+            row[10] == 1,
+            row[14] == 1,
         )
 
     async def add_farmer_record(self, farmer_record: FarmerRecord, metadata: RequestMetadata):
@@ -396,7 +396,7 @@ class MySQLPoolStore(AbstractPoolStore):
             )
             row = await cursor.fetchone()
             await cursor.close()
-            result = [True if row[0] == 1 else False, row[1]]
+            result = [row[0] == 1, row[1]]
             return result
 
     async def add_pool_block(
