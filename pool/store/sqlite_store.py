@@ -72,7 +72,7 @@ class SqlitePoolStore(AbstractPoolStore):
             row[7],
             row[8],
             row[9],
-            True if row[10] == 1 else False,
+            row[10] == 1,
         )
 
     async def add_farmer_record(self, farmer_record: FarmerRecord, metadata: RequestMetadata):
