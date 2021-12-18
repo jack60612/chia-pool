@@ -50,13 +50,13 @@ from .util import error_dict, RequestMetadata
 
 class Pool:
     def __init__(
-            self,
-            config: Dict,
-            pool_config: Dict,
-            constants: ConsensusConstants,
-            pool_store: Optional[AbstractPoolStore] = None,
-            difficulty_function: Callable = get_new_difficulty,
-            payment_manager: Optional[DefaultPaymentManager] = None,
+        self,
+        config: Dict,
+        pool_config: Dict,
+        constants: ConsensusConstants,
+        pool_store: Optional[AbstractPoolStore] = None,
+        difficulty_function: Callable = get_new_difficulty,
+        payment_manager: Optional[DefaultPaymentManager] = None,
     ):
         self.follow_singleton_tasks: Dict[bytes32, asyncio.Task] = {}
         # logging config
@@ -289,7 +289,7 @@ class Pool:
                 farmer_record: Optional[FarmerRecord] = await self.store.get_farmer_record(partial.payload.launcher_id)
 
                 assert (
-                        partial.payload.proof_of_space.pool_contract_puzzle_hash == farmer_record.p2_singleton_puzzle_hash
+                    partial.payload.proof_of_space.pool_contract_puzzle_hash == farmer_record.p2_singleton_puzzle_hash
                 )
                 await self.add_partial_to_db(farmer_record, partial, points_received, stale, invalid=0)
 
@@ -322,13 +322,15 @@ class Pool:
             if is_member is None:
                 return error_dict(PoolErrorCode.INVALID_SINGLETON, f"Singleton is not assigned to this pool")
 
-            if (
-                    request.payload.suggested_difficulty is None
-                    or request.payload.suggested_difficulty < self.min_difficulty
-            ):
-                difficulty: uint64 = self.default_difficulty
-            else:
-                difficulty = request.payload.suggested_difficulty
+            # if (
+            #        request.payload.suggested_difficulty is None
+            #        or request.payload.suggested_difficulty < self.min_difficulty
+            # ):
+            #    difficulty: uint64 = self.default_difficulty
+            # else:
+            #    difficulty = request.payload.suggested_difficulty
+
+            difficulty = self.static_difficulty
 
             if len(hexstr_to_bytes(request.payload.payout_instructions)) != 32:
                 return error_dict(
@@ -408,23 +410,25 @@ class Pool:
 
         if request.payload.payout_instructions is not None:
             is_new_value = (
-                    farmer_record.payout_instructions != request.payload.payout_instructions
-                    and request.payload.payout_instructions is not None
-                    and len(hexstr_to_bytes(request.payload.payout_instructions)) == 32
+                farmer_record.payout_instructions != request.payload.payout_instructions
+                and request.payload.payout_instructions is not None
+                and len(hexstr_to_bytes(request.payload.payout_instructions)) == 32
             )
             response_dict["payout_instructions"] = is_new_value
             if is_new_value:
                 farmer_dict["payout_instructions"] = request.payload.payout_instructions
 
-        if request.payload.suggested_difficulty is not None:
-            is_new_value = (
-                    farmer_record.difficulty != request.payload.suggested_difficulty
-                    and request.payload.suggested_difficulty is not None
-                    and request.payload.suggested_difficulty >= self.min_difficulty
-            )
-            response_dict["suggested_difficulty"] = is_new_value
-            if is_new_value:
-                farmer_dict["difficulty"] = request.payload.suggested_difficulty
+        # if request.payload.suggested_difficulty is not None:
+        # is_new_value = (
+        #        farmer_record.difficulty != request.payload.suggested_difficulty
+        #        and request.payload.suggested_difficulty is not None
+        #        and request.payload.suggested_difficulty >= self.min_difficulty
+        # )
+        # response_dict["suggested_difficulty"] = is_new_value
+        # if is_new_value:
+        #    farmer_dict["difficulty"] = request.payload.suggested_difficulty
+        if farmer_dict["difficulty"] != self.static_difficulty:
+            farmer_dict["difficulty"] = self.static_difficulty
 
         async def update_farmer_later():
             await asyncio.sleep(self.farmer_update_cooldown_seconds)
@@ -440,7 +444,7 @@ class Pool:
         return response_dict
 
     async def get_and_validate_singleton_state(
-            self, launcher_id: bytes32
+        self, launcher_id: bytes32
     ) -> Optional[Tuple[CoinSpend, PoolState, bool]]:
         """
         :return: the state of the singleton, if it currently exists in the blockchain, and if it is assigned to
@@ -498,8 +502,8 @@ class Pool:
             )
             assert coin_record is not None
             if (
-                    self.state_keeper.blockchain_state["peak"].height - coin_record.confirmed_block_index
-                    > self.relative_lock_height
+                self.state_keeper.blockchain_state["peak"].height - coin_record.confirmed_block_index
+                > self.relative_lock_height
             ):
                 self.log.info(f"launcher_id {launcher_id} got enough confirmations to leave the pool")
                 is_pool_member = False
@@ -507,8 +511,8 @@ class Pool:
         self.log.info(f"Is {launcher_id} pool member: {is_pool_member}")
 
         if farmer_rec is not None and (
-                farmer_rec.singleton_tip != buried_singleton_tip
-                or farmer_rec.singleton_tip_state != buried_singleton_tip_state
+            farmer_rec.singleton_tip != buried_singleton_tip
+            or farmer_rec.singleton_tip_state != buried_singleton_tip_state
         ):
             # This means the singleton has been changed in the blockchain (either by us or someone else). We
             # still keep track of this singleton if the farmer has changed to a different pool, in case they
@@ -521,10 +525,10 @@ class Pool:
         return buried_singleton_tip, buried_singleton_tip_state, is_pool_member
 
     async def process_partial(
-            self,
-            partial: PostPartialRequest,
-            farmer_record: FarmerRecord,
-            time_received_partial: uint64,
+        self,
+        partial: PostPartialRequest,
+        farmer_record: FarmerRecord,
+        time_received_partial: uint64,
     ) -> Dict:
         # Validate signatures
         message: bytes32 = partial.payload.get_hash()
