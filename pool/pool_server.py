@@ -48,7 +48,7 @@ def allow_cors(response: HTTPResponse) -> HTTPResponse:
 def missing_argument() -> HTTPResponse:
     return error_response(
         PoolErrorCode.SERVER_EXCEPTION,
-        f"Missing Required Argument",
+        "Missing Required Argument",
     )
 
 

@@ -282,7 +282,7 @@ class Pool:
 
                 _, _, is_member = singleton_state_tuple
                 if not is_member:
-                    self.log.info(f"Singleton is not assigned to this pool")
+                    self.log.info("Singleton is not assigned to this pool")
                     return
 
             async with self.store.lock:
@@ -320,7 +320,7 @@ class Pool:
 
             last_spend, last_state, is_member = singleton_state_tuple
             if is_member is None:
-                return error_dict(PoolErrorCode.INVALID_SINGLETON, f"Singleton is not assigned to this pool")
+                return error_dict(PoolErrorCode.INVALID_SINGLETON, "Singleton is not assigned to this pool")
 
             # if (
             #        request.payload.suggested_difficulty is None
@@ -335,11 +335,11 @@ class Pool:
             if len(hexstr_to_bytes(request.payload.payout_instructions)) != 32:
                 return error_dict(
                     PoolErrorCode.INVALID_PAYOUT_INSTRUCTIONS,
-                    f"Payout instructions must be an xch address for this pool.",
+                    "Payout instructions must be an xch address for this pool.",
                 )
 
             if not AugSchemeMPL.verify(last_state.owner_pubkey, request.payload.get_hash(), request.signature):
-                return error_dict(PoolErrorCode.INVALID_SIGNATURE, f"Invalid signature")
+                return error_dict(PoolErrorCode.INVALID_SIGNATURE, "Invalid signature")
 
             launcher_coin: Optional[CoinRecord] = await self.node_rpc_client.get_coin_record_by_name(
                 request.payload.launcher_id
@@ -350,7 +350,7 @@ class Pool:
             delay_time, delay_puzzle_hash = get_delayed_puz_info_from_launcher_spend(launcher_solution)
 
             if delay_time < 3600:
-                return error_dict(PoolErrorCode.DELAY_TIME_TOO_SHORT, f"Delay time too short, must be at least 1 hour")
+                return error_dict(PoolErrorCode.DELAY_TIME_TOO_SHORT, "Delay time too short, must be at least 1 hour")
 
             p2_singleton_puzzle_hash = launcher_id_to_p2_puzzle_hash(
                 request.payload.launcher_id, delay_time, delay_puzzle_hash
@@ -381,7 +381,7 @@ class Pool:
         # First check if this launcher_id is currently blocked for farmer updates, if so there is no reason to validate
         # all the stuff below
         if launcher_id in self.farmer_update_blocked:
-            return error_dict(PoolErrorCode.REQUEST_FAILED, f"Cannot update farmer yet.")
+            return error_dict(PoolErrorCode.REQUEST_FAILED, "Cannot update farmer yet.")
         farmer_record: Optional[FarmerRecord] = await self.store.get_farmer_record(launcher_id)
         if farmer_record is None:
             return error_dict(PoolErrorCode.FARMER_NOT_KNOWN, f"Farmer with launcher_id {launcher_id} not known.")
@@ -395,10 +395,10 @@ class Pool:
 
         last_spend, last_state, is_member = singleton_state_tuple
         if is_member is None:
-            return error_dict(PoolErrorCode.INVALID_SINGLETON, f"Singleton is not assigned to this pool")
+            return error_dict(PoolErrorCode.INVALID_SINGLETON, "Singleton is not assigned to this pool")
 
         if not AugSchemeMPL.verify(last_state.owner_pubkey, request.payload.get_hash(), request.signature):
-            return error_dict(PoolErrorCode.INVALID_SIGNATURE, f"Invalid signature")
+            return error_dict(PoolErrorCode.INVALID_SIGNATURE, "Invalid signature")
 
         farmer_dict = farmer_record.to_json_dict()
         response_dict = {}
