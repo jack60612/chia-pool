@@ -224,6 +224,9 @@ class Pool:
                 invalid=invalid,
             )
 
+    async def get_chia_netspace(self):
+        return self.state_keeper.blockchain_state["space"]  # netspace in bytes
+
     async def confirm_partials_loop(self):
         """
         Pulls things from the queue of partials one at a time, and adjusts balances.

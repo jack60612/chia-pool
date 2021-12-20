@@ -299,6 +299,9 @@ class PoolServer:
 
         return await self.login_response(launcher_id)
 
+    async def get_netspace(self, request_obj: Request) -> HTTPResponse:
+        return sanic_jsonify({"netspace": await self.pool.get_chia_netspace()})  # return netspace in bytes
+
     async def login_response(self, launcher_id):
         payment_record: Optional = await self.pool.store.get_payment_system(launcher_id)
         response = {"pps_enabled": payment_record[0]}
@@ -324,6 +327,7 @@ def start_pool_server(
     app.add_route(server.wrap_http_handler(server.index), "/")
     app.add_route(server.wrap_http_handler(server.get_pool_info), "/pool_info")
     app.add_route(server.wrap_http_handler(server.get_farmer), "/farmer")
+    app.add_route(server.wrap_http_handler(server.get_netspace), "/chia_netspace")
     app.add_route(
         server.wrap_http_handler(server.post_farmer),
         "/farmer",
