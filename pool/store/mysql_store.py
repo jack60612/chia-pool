@@ -413,7 +413,7 @@ class MySQLPoolStore(AbstractPoolStore):
             await cursor.execute(
                 "INSERT INTO blocks(coin_id, created_at, block_timestamp, pps, amount, block_height, launcher_id)"
                 "VALUES(%s, SYSDATE(6), %s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE coin_id=%s",
-                (coin_id.hex(), block_timestamp, pps, amount, block_height, coin_id.hex()),
+                (coin_id.hex(), block_timestamp, pps, amount, block_height, launcher_id.hex(), coin_id.hex()),
             )
             await connection.commit()
             await cursor.close()
