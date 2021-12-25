@@ -10,6 +10,7 @@ pool_url: https://chia.minerium.com/
 min_difficulty: 5
 default_difficulty: 5
 static_difficulty: 5
+wallet_enabled: 0
 default_target_address: txch1xly7ugj4u6e0sgjjsj25lrf9a2ejy0ezr659c29jyhwda9plu20qnwu8dt
 pool_fee_address: txch1mdw5usvgjrhx6e8ja396kyfnwy3jyzltnkdytvt8vcky7nl7d6us54s3hj
 wallet_fingerprint: 1718616103
