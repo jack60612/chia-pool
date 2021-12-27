@@ -117,7 +117,7 @@ class PoolServer:
 
     @staticmethod
     async def index(_) -> HTTPResponse:
-        return text("Chia reference pool")
+        return text("Minerium Chia Pool")
 
     async def get_pool_info(self, _) -> HTTPResponse:
         res: GetPoolInfoResponse = GetPoolInfoResponse(
