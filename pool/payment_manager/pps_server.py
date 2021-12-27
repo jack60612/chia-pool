@@ -40,6 +40,7 @@ class PaymentServer:
         self.log.basicConfig(
             level=logging.INFO,
             filename=pool_config["PPS_logging"]["log_path"] + pool_config["PPS_logging"]["log_filename"],
+            encoding="utf-8",
             force=True,
         )
         initialize_logging(

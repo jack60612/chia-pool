@@ -65,6 +65,7 @@ class Pool:
         self.log.basicConfig(
             level=logging.INFO,
             filename=pool_config["logging"]["log_path"] + pool_config["logging"]["log_filename"],
+            encoding="utf-8",
             force=True,
         )
 
