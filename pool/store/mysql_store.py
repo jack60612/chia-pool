@@ -255,8 +255,8 @@ class MySQLPoolStore(AbstractPoolStore):
         with (await self.pool) as connection:
             cursor = await connection.cursor()
             await cursor.execute(
-                "SELECT partial.difficulty, farmer.payout_instructions, partial.accept_time, partial.launcher_id FROM partial "
-                f"INNER JOIN farmer ON partial.launcher_id=farmer.launcher_id WHERE partial.pps=0 "
+                "SELECT partial.difficulty, farmer.payout_instructions, partial.accept_time, partial.launcher_id "
+                "FROM partial INNER JOIN farmer ON partial.launcher_id=farmer.launcher_id WHERE partial.pps=0 "
                 f"AND partial.stale=0 AND partial.invalid=0 ORDER BY partial.accept_time "
                 f"DESC LIMIT %s",
                 (pplns_n_value),
