@@ -35,6 +35,9 @@ class DefaultPaymentManager(AbstractPaymentManager):
 
         # After this many confirmations, a transaction is considered final and irreversible
         self.confirmation_security_threshold = self._pool_config["confirmation_security_threshold"]
+        
+        # After this many confirmations, a block reward is considered final and irreversible
+        self.block_confirmation_security_threshold = self._pool_config["block_confirmation_security_threshold"]
 
         # Interval for checking for new farmers if standalone mode is activated.
         self.standalone_search_interval = self._pool_config["standalone_search_interval"]
@@ -137,7 +140,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
                         self._logger.info(f"Non coinbase coin: {cr.coin}, ignoring")
                         continue
 
-                    if cr.confirmed_block_index > peak_height - self.confirmation_security_threshold:
+                    if cr.confirmed_block_index > peak_height - self.block_confirmation_security_threshold:
                         not_buried_amounts += cr.coin.amount
                         continue
                     if cr.coin.puzzle_hash not in ph_to_amounts:

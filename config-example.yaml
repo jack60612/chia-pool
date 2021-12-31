@@ -39,6 +39,7 @@ scan_start_height: 0
 collect_pool_rewards_interval: 600
 standalone_search_interval: 600
 confirmation_security_threshold: 32
+block_confirmation_security_threshold: 5
 payment_interval: 600
 pps_payment_interval: 600
 max_additions_per_transaction: 400
