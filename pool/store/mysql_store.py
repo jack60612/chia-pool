@@ -120,6 +120,15 @@ class MySQLPoolStore(AbstractPoolStore):
                 "FOREIGN KEY (launcher_id) REFERENCES farmer(launcher_id))"
             )
         )
+        await cursor.execute(
+            (
+                "CREATE TABLE IF NOT EXISTS pool_stats_graph("
+                "stats_time DATETIME(6) PRIMARY KEY,"
+                "farmers int,"
+                "avg_pool_space int,"
+                "raw_pool_space int )"  # stored in tib
+            )
+        )
 
         await connection.commit()
         self.pool.release(connection)
