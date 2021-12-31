@@ -35,7 +35,7 @@ class DefaultPaymentManager(AbstractPaymentManager):
 
         # After this many confirmations, a transaction is considered final and irreversible
         self.confirmation_security_threshold = self._pool_config["confirmation_security_threshold"]
-        
+
         # After this many confirmations, a block reward is considered final and irreversible
         self.block_confirmation_security_threshold = self._pool_config["block_confirmation_security_threshold"]
 
