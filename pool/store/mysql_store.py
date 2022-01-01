@@ -259,7 +259,7 @@ class MySQLPoolStore(AbstractPoolStore):
                 "FROM partial INNER JOIN farmer ON partial.launcher_id=farmer.launcher_id WHERE partial.pps=0 "
                 f"AND partial.stale=0 AND partial.invalid=0 ORDER BY partial.accept_time "
                 f"DESC LIMIT %s",
-                (pplns_n_value),
+                pplns_n_value,
             )
             rows = await cursor.fetchall()
             await cursor.close()
@@ -276,7 +276,7 @@ class MySQLPoolStore(AbstractPoolStore):
     async def get_pps_farmer_points_and_payout_instructions(self, min_points: int) -> List[Tuple[uint64, bytes32]]:
         with (await self.pool) as connection:
             cursor = await connection.cursor()
-            await cursor.execute("SELECT points, payout_instructions FROM farmer WHERE points>=%s", (min_points))
+            await cursor.execute("SELECT points, payout_instructions FROM farmer WHERE points>=%s", min_points)
             rows = await cursor.fetchall()
             await cursor.close()
             accumulated: Dict[bytes32, uint64] = {}
@@ -296,7 +296,12 @@ class MySQLPoolStore(AbstractPoolStore):
     async def clear_pps_points(self, min_points: int) -> None:
         with (await self.pool) as connection:
             cursor = await connection.cursor()
-            await cursor.execute("UPDATE farmer set points=0 WHERE pps_enabled=1 AND points>=%s", (min_points))
+            await cursor.execute(
+                "DELETE from partial where launcher_id="
+                "(SELECT launcher_id from farmer WHERE pps_enabled=1 AND points>=%s)",
+                min_points,
+            )
+            await cursor.execute("UPDATE farmer set points=0 WHERE pps_enabled=1 AND points>=%s", min_points)
             await connection.commit()
             await cursor.close()
 
@@ -361,11 +366,11 @@ class MySQLPoolStore(AbstractPoolStore):
                 cursor = await connection.cursor()
                 if pps is 1:
                     await cursor.execute(
-                        "SELECT launcher_id from farmer where payout_instructions=%s", (payout_instructions)
+                        "SELECT launcher_id from farmer where payout_instructions=%s", payout_instructions
                     )
                 else:
                     await cursor.execute(
-                        "SELECT launcher_id from partial where payout_instructions=%s", (payout_instructions)
+                        "SELECT launcher_id from partial where payout_instructions=%s", payout_instructions
                     )
                 row = await cursor.fetchone()
                 await cursor.close()
