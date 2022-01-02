@@ -276,7 +276,9 @@ class MySQLPoolStore(AbstractPoolStore):
     async def get_pps_farmer_points_and_payout_instructions(self, min_points: int) -> List[Tuple[uint64, bytes32]]:
         with (await self.pool) as connection:
             cursor = await connection.cursor()
-            await cursor.execute("SELECT points, payout_instructions FROM farmer WHERE points>=%s", min_points)
+            await cursor.execute(
+                "SELECT points, payout_instructions FROM farmer WHERE pps_enabled=1 AND points>=%s", min_points
+            )
             rows = await cursor.fetchall()
             await cursor.close()
             accumulated: Dict[bytes32, uint64] = {}

@@ -1,6 +1,6 @@
 import asyncio
 import traceback
-from typing import Dict, Optional, Set, List, Tuple
+from typing import Dict, Optional, List, Tuple
 
 from chia.consensus.block_rewards import calculate_pool_reward
 from chia.types.coin_record import CoinRecord
@@ -9,9 +9,9 @@ from chia.util.ints import uint32, uint64
 from chia.types.blockchain_format.sized_bytes import bytes32
 from chia.wallet.transaction_record import TransactionRecord
 
-from pool.record import FarmerRecord
 
 from pool.payment_manager.abstract import AbstractPaymentManager
+from pool.record import FarmerRecord
 
 
 class PPSPaymentManager(AbstractPaymentManager):
@@ -58,9 +58,6 @@ class PPSPaymentManager(AbstractPaymentManager):
         # This is the list of payments that we have not sent yet, to farmers
         self.pps_pending_payments: Optional[asyncio.Queue] = None
 
-        self.scan_p2_singleton_puzzle_hashes: Set[bytes32] = set()
-
-        self.check_new_farmers_loop_task: Optional[asyncio.Task] = None
         self.update_pps_price_loop_task: Optional[asyncio.Task] = None
         self.create_pps_payment_loop_task: Optional[asyncio.Task] = None
         self.pps_submit_payment_loop_task: Optional[asyncio.Task] = None
@@ -68,10 +65,7 @@ class PPSPaymentManager(AbstractPaymentManager):
     async def start(self, *args, **kwargs):
         await super().start(*args, **kwargs)
         self.pps_pending_payments = asyncio.Queue()
-        self.scan_p2_singleton_puzzle_hashes = await self._store.get_pay_to_singleton_phs()
 
-        if self._standalone is True:
-            self.check_new_farmers_loop_task = asyncio.create_task(self.check_new_farmers_loop())
         self.update_pps_price_loop_task = asyncio.create_task(self.update_pps_price_loop())
         self.create_pps_payment_loop_task = asyncio.create_task(self.create_pps_payment_loop())
         self.pps_submit_payment_loop_task = asyncio.create_task(self.pps_submit_payment_loop())
@@ -79,21 +73,13 @@ class PPSPaymentManager(AbstractPaymentManager):
     async def stop(self):
         if self.update_pps_price_loop_task is not None:
             self.update_pps_price_loop_task.cancel()
-        if self.check_new_farmers_loop_task is not None:
-            self.check_new_farmers_loop_task.cancel()
         if self.create_pps_payment_loop_task is not None:
             self.create_pps_payment_loop_task.cancel()
         if self.pps_submit_payment_loop_task is not None:
             self.pps_submit_payment_loop_task.cancel()
 
     def register_new_farmer(self, farmer_record: FarmerRecord):
-        self.scan_p2_singleton_puzzle_hashes.add(farmer_record.p2_singleton_puzzle_hash)
-
-    async def check_new_farmers_loop(self):
-        while True:
-            self._logger.info("Checking for new pool members")
-            self.scan_p2_singleton_puzzle_hashes = await self._store.get_pay_to_singleton_phs()
-            await asyncio.sleep(self.standalone_search_interval)
+        ...  # do nothing
 
     async def update_pps_price_loop(self):
         while True:
@@ -252,7 +238,8 @@ class PPSPaymentManager(AbstractPaymentManager):
                             )
                             peak_height = self._state_keeper.blockchain_state["peak"].height
                             self._logger.info(
-                                f"Waiting for pps transaction to obtain {self.confirmation_security_threshold} confirmations"
+                                "Waiting for pps transaction to obtain "
+                                f"{self.confirmation_security_threshold} confirmations"
                             )
                             if not transaction.confirmed:
                                 self._logger.info(f"Not confirmed. In mempool? {transaction.is_in_mempool()}")
