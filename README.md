@@ -12,7 +12,7 @@ CREATE EVENT save_farmer_hourly_average ON SCHEDULE EVERY 1 HOUR DO INSERT INTO 
 
 CREATE EVENT delete_old_farmer_hourly_average ON SCHEDULE EVERY 1 DAY DO DELETE FROM farmer_average WHERE timestamp < (DATE_SUB(SYSDATE(), INTERVAL 1 MONTH));
 
-CREATE EVENT update_pool_graph ON SCHEDULE EVERY 2 MINUTE DO INSERT INTO pool_stats_graph(stats_time, farmers, avg_pool_space, raw_pool_space) VALUES(SYSDATE(6), (SELECT COUNT(DISTINCT(harvester_id)) FROM `partial` WHERE accept_time > (DATE_SUB(SYSDATE(), INTERVAL 30 MINUTE))), (SELECT (SUM(difficulty) * 0.02) * 2 FROM partial WHERE accept_time >= (DATE_SUB(SYSDATE(), INTERVAL 12 HOUR)) AND stale=0 AND invalid=0), (SELECT ((SUM(difficulty) * 24) * 0.01) * 2 FROM partial WHERE accept_time >= (DATE_SUB(SYSDATE(), INTERVAL 1 HOUR)) AND stale=0 AND invalid=0));
+CREATE EVENT update_pool_graph ON SCHEDULE EVERY 5 MINUTE DO INSERT INTO pool_stats_graph(stats_time, farmers, avg_pool_space, raw_pool_space) VALUES(SYSDATE(6), (SELECT COUNT(DISTINCT(harvester_id)) FROM `partial` WHERE accept_time > (DATE_SUB(SYSDATE(), INTERVAL 30 MINUTE))), (SELECT (SUM(difficulty) * 0.02) * 2 FROM partial WHERE accept_time >= (DATE_SUB(SYSDATE(), INTERVAL 12 HOUR)) AND stale=0 AND invalid=0), (SELECT ((SUM(difficulty) * 24) * 0.01) * 2 FROM partial WHERE accept_time >= (DATE_SUB(SYSDATE(), INTERVAL 1 HOUR)) AND stale=0 AND invalid=0));
 
 ## Pool Reference V1
 This code is provided under the Apache 2.0 license.
