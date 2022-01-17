@@ -78,8 +78,8 @@ class MySQLPoolStore(AbstractPoolStore):
             "payout_instructions VARCHAR(256),"
             "accept_time DATETIME(6),"
             "pps boolean,"
-            "stale boolean DEFAULT 0,"
-            "invalid boolean DEFAULT 0,"
+            "stale bigint DEFAULT 0,"
+            "invalid bigint DEFAULT 0,"
             "FOREIGN KEY (launcher_id) REFERENCES farmer(launcher_id),"
             "index (timestamp), index (launcher_id))"
         )
@@ -256,8 +256,7 @@ class MySQLPoolStore(AbstractPoolStore):
             cursor = await connection.cursor()
             await cursor.execute(
                 "SELECT partial.difficulty, farmer.payout_instructions, partial.accept_time, partial.launcher_id "
-                "FROM partial INNER JOIN farmer ON partial.launcher_id=farmer.launcher_id WHERE partial.pps=0 "
-                f"AND partial.stale=0 AND partial.invalid=0 ORDER BY partial.accept_time "
+                "FROM partial INNER JOIN farmer ON partial.launcher_id=farmer.launcher_id WHERE partial.pps=0 ORDER BY partial.accept_time "
                 f"DESC LIMIT %s",
                 pplns_n_value,
             )
@@ -325,12 +324,12 @@ class MySQLPoolStore(AbstractPoolStore):
                 (
                     launcher_id.hex(),
                     timestamp,
-                    difficulty,
+                    difficulty if stale == 0 and invalid == 0 else 0,
                     harvester_id.hex(),
                     payout_instructions,
                     pps,
-                    stale,
-                    invalid,
+                    stale if stale == 0 else difficulty,
+                    invalid if invalid == 0 else difficulty,
                 ),
             )
             await connection.commit()
@@ -348,7 +347,7 @@ class MySQLPoolStore(AbstractPoolStore):
         with (await self.pool) as connection:
             cursor = await connection.cursor()
             await cursor.execute(
-                "SELECT timestamp, difficulty from partial WHERE launcher_id=%s AND stale=0 AND invalid=0 "
+                "SELECT timestamp, difficulty from partial WHERE launcher_id=%s "
                 "ORDER BY timestamp DESC LIMIT %s",
                 (launcher_id.hex(), count),
             )

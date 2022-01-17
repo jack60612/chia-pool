@@ -1,18 +1,18 @@
 To update from upstream refer to https://gist.github.com/0xjac/85097472043b697ab57ba1b1c7530274
 ## DB EVENTS
-CREATE EVENT update_sec_points ON SCHEDULE EVERY 10 MINUTE DO UPDATE farmer JOIN (SELECT SUM(partial.difficulty) AS totalPoints, partial.launcher_id, partial.pps FROM partial WHERE stale=0 AND invalid = 0 GROUP BY partial.launcher_id) AS pointTotals ON farmer.launcher_id = pointTotals.launcher_id SET farmer.points = pointTotals.totalPoints WHERE partial.pps=0;
+CREATE EVENT update_sec_points ON SCHEDULE EVERY 10 MINUTE DO UPDATE farmer JOIN (SELECT SUM(partial.difficulty) AS totalPoints, partial.launcher_id, partial.pps FROM partial GROUP BY partial.launcher_id) AS pointTotals ON farmer.launcher_id = pointTotals.launcher_id SET farmer.points = pointTotals.totalPoints WHERE partial.pps=0;
 
 CREATE EVENT remove_old_points ON SCHEDULE EVERY 1 MINUTE DO DELETE FROM partial WHERE pps=0 AND accept_time < (DATE_SUB(SYSDATE(), INTERVAL 1 DAY));
 
-CREATE EVENT remove_points_from_old_users ON SCHEDULE EVERY 1 HOUR DO UPDATE farmer JOIN (SELECT farmer.launcher_id, farmer.pps_enabled FROM farmer LEFT JOIN partial ON partial.launcher_id = farmer.launcher_id WHERE partial.launcher_id IS NULL AND farmer.pps_enabled = 0 AND partial.stale=0 AND partial.invalid = 0) AS emptyFarmers ON farmer.launcher_id = emptyFarmers.launcher_id SET farmer.points = 0;
+CREATE EVENT remove_points_from_old_users ON SCHEDULE EVERY 1 HOUR DO UPDATE farmer JOIN (SELECT farmer.launcher_id, farmer.pps_enabled FROM farmer LEFT JOIN partial ON partial.launcher_id = farmer.launcher_id WHERE partial.launcher_id IS NULL AND farmer.pps_enabled = 0) AS emptyFarmers ON farmer.launcher_id = emptyFarmers.launcher_id SET farmer.points = 0;
 
 CREATE EVENT update_farmer_blocks ON SCHEDULE EVERY 10 MINUTE DO UPDATE farmer JOIN (SELECT COUNT(blocks.block_height) AS totalBlocks, blocks.launcher_id FROM blocks GROUP BY blocks.launcher_id) AS blockTotals ON farmer.launcher_id = blockTotals.launcher_id SET farmer.blocks = blockTotals.totalBlocks;
 
-CREATE EVENT save_farmer_hourly_average ON SCHEDULE EVERY 1 HOUR DO INSERT INTO farmer_average SELECT launcher_id, NOW(), SUM(difficulty) as points FROM partial WHERE stale = 0 AND invalid = 0 AND FROM_UNIXTIME(timestamp) >= DATE_SUB(NOW(), INTERVAL 1 HOUR);
+CREATE EVENT save_farmer_hourly_average ON SCHEDULE EVERY 1 HOUR DO INSERT INTO farmer_average SELECT launcher_id, NOW(), SUM(difficulty) as points FROM partial WHERE  FROM_UNIXTIME(timestamp) >= DATE_SUB(NOW(), INTERVAL 1 HOUR);
 
 CREATE EVENT delete_old_farmer_hourly_average ON SCHEDULE EVERY 1 DAY DO DELETE FROM farmer_average WHERE timestamp < (DATE_SUB(SYSDATE(), INTERVAL 15 DAY));
 
-CREATE EVENT update_pool_graph ON SCHEDULE EVERY 5 MINUTE DO INSERT INTO pool_stats_graph(stats_time, farmers, avg_pool_space, raw_pool_space) VALUES(SYSDATE(6), (SELECT COUNT(DISTINCT(harvester_id)) FROM `partial` WHERE accept_time > (DATE_SUB(SYSDATE(), INTERVAL 30 MINUTE))), (SELECT (SUM(difficulty) * 0.02) * 2 FROM partial WHERE accept_time >= (DATE_SUB(SYSDATE(), INTERVAL 12 HOUR)) AND stale=0 AND invalid=0), (SELECT ((SUM(difficulty) * 24) * 0.01) * 2 FROM partial WHERE accept_time >= (DATE_SUB(SYSDATE(), INTERVAL 1 HOUR)) AND stale=0 AND invalid=0));
+CREATE EVENT update_pool_graph ON SCHEDULE EVERY 5 MINUTE DO INSERT INTO pool_stats_graph(stats_time, farmers, avg_pool_space, raw_pool_space) VALUES(SYSDATE(6), (SELECT COUNT(DISTINCT(harvester_id)) FROM `partial` WHERE accept_time > (DATE_SUB(SYSDATE(), INTERVAL 30 MINUTE))), (SELECT (SUM(difficulty) * 0.02) * 2 FROM partial WHERE accept_time >= (DATE_SUB(SYSDATE(), INTERVAL 12 HOUR))), (SELECT ((SUM(difficulty) * 24) * 0.01) * 2 FROM partial WHERE accept_time >= (DATE_SUB(SYSDATE(), INTERVAL 1 HOUR))));
 
 ## Pool Reference V1
 This code is provided under the Apache 2.0 license.
