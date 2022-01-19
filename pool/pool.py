@@ -218,11 +218,11 @@ class Pool:
                 partial.payload.launcher_id,
                 partial.payload.harvester_id,
                 timestamp=uint64(int(time.time())),
-                difficulty= difficulty if stale == 0 and invalid == 0 else 0,
+                difficulty=difficulty if stale == 0 and invalid == 0 else 0,
                 payout_instructions=farmer_record.payout_instructions,
-                pps= 1 if farmer_record.pps_enabled else 0,
-                stale= 0 if stale == 0 else difficulty,
-                invalid= 0 if invalid == 0 else difficulty,
+                pps=1 if farmer_record.pps_enabled else 0,
+                stale=0 if stale == 0 else difficulty,
+                invalid=0 if invalid == 0 else difficulty,
             )
 
     async def get_chia_netspace(self):
