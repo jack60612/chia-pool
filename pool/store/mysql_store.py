@@ -323,12 +323,12 @@ class MySQLPoolStore(AbstractPoolStore):
                 (
                     launcher_id.hex(),
                     timestamp,
-                    difficulty if stale == 0 and invalid == 0 else 0,
+                    difficulty,
                     harvester_id.hex(),
                     payout_instructions,
                     pps,
-                    0 if stale == 0 else difficulty,
-                    0 if invalid == 0 else difficulty,
+                    stale,
+                    invalid,
                 ),
             )
             await connection.commit()
