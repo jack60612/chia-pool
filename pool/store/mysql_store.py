@@ -159,11 +159,10 @@ class MySQLPoolStore(AbstractPoolStore):
             cursor = await connection.cursor()
             await cursor.execute(
                 "INSERT INTO farmer (launcher_id,p2_singleton_puzzle_hash,delay_time,delay_puzzle_hash,"
-                f"authentication_public_key,singleton_tip,singleton_tip_state,points,difficulty,payout_instructions,"
-                f"is_pool_member) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
-                f"ON DUPLICATE KEY UPDATE p2_singleton_puzzle_hash=%s, delay_time=%s, delay_puzzle_hash=%s,"
-                f"authentication_public_key=%s, singleton_tip=%s, singleton_tip_state=%s, payout_instructions=%s, "
-                f"is_pool_member=%s",
+                "authentication_public_key,singleton_tip,singleton_tip_state,points,difficulty,payout_instructions,"
+                "is_pool_member) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+                "ON DUPLICATE KEY UPDATE p2_singleton_puzzle_hash=%s, delay_time=%s, delay_puzzle_hash=%s,"
+                "authentication_public_key=%s, singleton_tip=%s, singleton_tip_state=%s, payout_instructions=%s, is_pool_member=%s",
                 (
                     farmer_record.launcher_id.hex(),
                     farmer_record.p2_singleton_puzzle_hash.hex(),
@@ -328,13 +327,13 @@ class MySQLPoolStore(AbstractPoolStore):
                     harvester_id.hex(),
                     payout_instructions,
                     pps,
-                    stale if stale == 0 else difficulty,
-                    invalid if invalid == 0 else difficulty,
+                    0 if stale == 0 else difficulty,
+                    0 if invalid == 0 else difficulty,
                 ),
             )
             await connection.commit()
             await cursor.close()
-        if stale == 0 and invalid == 0:
+        if stale == 0 or invalid == 0:
             cursor = await connection.cursor()
             await cursor.execute(
                 "UPDATE farmer set overall_points=overall_points+%s, points=points+%s where launcher_id=%s",
