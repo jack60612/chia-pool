@@ -36,7 +36,7 @@ from .payment_manager.abstract import AbstractPaymentManager
 from .store.abstract import AbstractPoolStore
 from .util import error_response, RequestMetadata, sanic_jsonify
 
-app = Sanic("Pool Server", configure_logging=True)
+app = Sanic("Minerium_Pool_Server", configure_logging=True)
 app.config.FORWARDED_SECRET = "34geggfdgdgdgertertgertetet5fgfdg4345431"
 
 
