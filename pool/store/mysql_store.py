@@ -186,6 +186,7 @@ class MySQLPoolStore(AbstractPoolStore):
                 ),
             )
             await connection.commit()
+            await cursor.close()
 
     async def get_farmer_record(self, launcher_id: bytes32) -> Optional[FarmerRecord]:
         # TODO(pool): use cache
@@ -193,6 +194,7 @@ class MySQLPoolStore(AbstractPoolStore):
             cursor = await connection.cursor()
             await cursor.execute("SELECT * FROM farmer WHERE launcher_id=%s", (launcher_id.hex()))
             row = await cursor.fetchone()
+            await cursor.close()
             if row is None:
                 return None
             return self._row_to_farmer_record(row)
@@ -204,6 +206,7 @@ class MySQLPoolStore(AbstractPoolStore):
                 "UPDATE farmer SET difficulty=%s WHERE launcher_id=%s", (difficulty, launcher_id.hex())
             )
             await connection.commit()
+            await cursor.close()
 
     async def update_singleton(
         self,
@@ -223,6 +226,7 @@ class MySQLPoolStore(AbstractPoolStore):
                 entry,
             )
             await connection.commit()
+            await cursor.close()
 
     async def get_pay_to_singleton_phs(self) -> Set[bytes32]:
         with (await self.pool) as connection:
@@ -331,14 +335,11 @@ class MySQLPoolStore(AbstractPoolStore):
                     invalid,
                 ),
             )
-            await connection.commit()
-            await cursor.close()
-        if stale == 0 or invalid == 0:
-            cursor = await connection.cursor()
-            await cursor.execute(
-                "UPDATE farmer set overall_points=overall_points+%s, points=points+%s where launcher_id=%s",
-                (difficulty, difficulty, launcher_id.hex()),
-            )
+            if stale == 0 or invalid == 0:
+                await cursor.execute(
+                    "UPDATE farmer set overall_points=overall_points+%s, points=points+%s where launcher_id=%s",
+                    (difficulty, difficulty, launcher_id.hex()),
+                )
             await connection.commit()
             await cursor.close()
 
@@ -350,6 +351,7 @@ class MySQLPoolStore(AbstractPoolStore):
                 (launcher_id.hex(), count),
             )
             rows = await cursor.fetchall()
+            await cursor.close()
             ret: List[Tuple[uint64, uint64]] = [
                 (uint64(timestamp), uint64(difficulty)) for timestamp, difficulty in rows
             ]
@@ -372,24 +374,19 @@ class MySQLPoolStore(AbstractPoolStore):
                         "SELECT launcher_id from partial where payout_instructions=%s", payout_instructions
                     )
                 row = await cursor.fetchone()
-                await cursor.close()
                 if row is not None:  # launcher_id not in db. Probably just the fee address.
                     launcher_id = row[0]
-                    cursor = await connection.cursor()
-
                     await cursor.execute(
                         "INSERT INTO payments(payout_time,block_height,transaction_id,launcher_id,payout_instructions,"
                         f"payout,pps,confirmed) "
                         f"VALUES(SYSDATE(6),%s,%s,%s,%s,%s,%s,0)",
                         (block_confirmed, transaction_id.hex(), launcher_id, payout_instructions, payout, pps),
                     )
-                    await connection.commit()
-                    await cursor.close()
-                    cursor = await connection.cursor()
                     await cursor.execute(
                         "UPDATE farmer SET xch_paid=xch_paid+%s WHERE launcher_id=%s", (payout, launcher_id)
                     )
-                    await connection.commit()
+                await connection.commit()
+                await cursor.close()
 
     async def confirm_payouts(self, transaction_id: bytes32, block_confirmed: int) -> None:
         with (await self.pool) as connection:
