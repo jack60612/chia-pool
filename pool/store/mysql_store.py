@@ -34,7 +34,7 @@ class MySQLPoolStore(AbstractPoolStore):
                 config: Dict = yaml.safe_load(f)
             self.pool = await aiomysql.create_pool(
                 minsize=10,
-                maxsize=120,
+                maxsize=500,
                 host=config["db_host"],
                 port=config["db_port"],
                 user=config["db_user"],
@@ -335,7 +335,7 @@ class MySQLPoolStore(AbstractPoolStore):
                     invalid,
                 ),
             )
-            if stale == 0 or invalid == 0:
+            if stale == 0 and invalid == 0:
                 await cursor.execute(
                     "UPDATE farmer set overall_points=overall_points+%s, points=points+%s where launcher_id=%s",
                     (difficulty, difficulty, launcher_id.hex()),
