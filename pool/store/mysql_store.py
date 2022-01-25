@@ -51,15 +51,15 @@ class MySQLPoolStore(AbstractPoolStore):
                 "CREATE TABLE IF NOT EXISTS farmer("
                 "launcher_id VARCHAR(200) PRIMARY KEY,"
                 "p2_singleton_puzzle_hash VARCHAR(256),"
-                "delay_time bigint,"
+                "delay_time int,"
                 "delay_puzzle_hash VARCHAR(256),"
                 "authentication_public_key VARCHAR(256),"
                 "singleton_tip blob,"
                 "singleton_tip_state blob,"
                 "points bigint,"
-                "difficulty bigint,"
+                "difficulty SMALLINT,"
                 "payout_instructions VARCHAR(256),"
-                "is_pool_member tinyint,"
+                "is_pool_member boolean,"
                 "overall_points bigint DEFAULT 0,"
                 "blocks int DEFAULT 0,"
                 "xch_paid float DEFAULT 0,"
@@ -73,13 +73,13 @@ class MySQLPoolStore(AbstractPoolStore):
             "CREATE TABLE IF NOT EXISTS partial("
             "launcher_id VARCHAR(256), "
             "timestamp bigint,"
-            "difficulty bigint,"
+            "difficulty SMALLINT,"
             "harvester_id VARCHAR(256), "
             "payout_instructions VARCHAR(256),"
             "accept_time DATETIME(6),"
             "pps boolean,"
-            "stale bigint DEFAULT 0,"
-            "invalid bigint DEFAULT 0,"
+            "stale SMALLINT DEFAULT 0,"
+            "invalid SMALLINT DEFAULT 0,"
             "FOREIGN KEY (launcher_id) REFERENCES farmer(launcher_id),"
             "index (timestamp), index (launcher_id))"
         )
@@ -113,10 +113,23 @@ class MySQLPoolStore(AbstractPoolStore):
         )
         await cursor.execute(
             (
-                "CREATE TABLE IF NOT EXISTS farmer_average("
+                "CREATE TABLE IF NOT EXISTS launcher_stats_1h("
                 "launcher_id VARCHAR(256),"
                 "timestamp DATETIME(6),"
-                "points bigint,"
+                "points MEDIUMINT,"
+                "stale MEDIUMINT,"
+                "invalid MEDIUMINT,"
+                "FOREIGN KEY (launcher_id) REFERENCES farmer(launcher_id))"
+            )
+        )
+        await cursor.execute(
+            (
+                "CREATE TABLE IF NOT EXISTS launcher_stats_5m("
+                "launcher_id VARCHAR(256),"
+                "timestamp DATETIME(6),"
+                "points MEDIUMINT,"
+                "stale MEDIUMINT,"
+                "invalid MEDIUMINT,"
                 "FOREIGN KEY (launcher_id) REFERENCES farmer(launcher_id))"
             )
         )
@@ -124,9 +137,9 @@ class MySQLPoolStore(AbstractPoolStore):
             (
                 "CREATE TABLE IF NOT EXISTS pool_stats_graph("
                 "stats_time DATETIME(6) PRIMARY KEY,"
-                "farmers int,"
-                "avg_pool_space int,"
-                "raw_pool_space int )"  # stored in tib
+                "farmers MEDIUMINT,"
+                "avg_pool_space MEDIUMINT,"
+                "raw_pool_space MEDIUMINT )"  # stored in tib
             )
         )
 
