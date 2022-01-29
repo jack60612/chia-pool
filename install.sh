@@ -3,3 +3,4 @@ python3 -m venv venv
 pip3 install -r requirements.txt
 pip3 install ../chia-blockchain/
 pip3 install sanic
+pip3 install aiomysql
