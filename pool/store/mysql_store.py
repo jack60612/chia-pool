@@ -350,7 +350,7 @@ class MySQLPoolStore(AbstractPoolStore):
             )
             if stale == 0 and invalid == 0:
                 await cursor.execute(
-                    "UPDATE farmer set overall_points=overall_points+%s, points=points+%s where launcher_id=%s",
+                    "UPDATE farmer set overall_points=overall_points+%s where launcher_id=%s",
                     (difficulty, difficulty, launcher_id.hex()),
                 )
             await connection.commit()
