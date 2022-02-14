@@ -207,6 +207,7 @@ class MySQLPoolStore(AbstractPoolStore):
             cursor = await connection.cursor()
             await cursor.execute("SELECT * FROM farmer WHERE launcher_id=%s", (launcher_id.hex()))
             row = await cursor.fetchone()
+            await connection.commit()
             await cursor.close()
             if row is None:
                 return None
@@ -246,6 +247,7 @@ class MySQLPoolStore(AbstractPoolStore):
             cursor = await connection.cursor()
             await cursor.execute("SELECT p2_singleton_puzzle_hash from farmer")
             rows = await cursor.fetchall()
+            await connection.commit()
             await cursor.close()
 
             all_phs: Set[bytes32] = set()
@@ -264,6 +266,7 @@ class MySQLPoolStore(AbstractPoolStore):
                 puzzle_hashes_db,
             )
             rows = await cursor.fetchall()
+            await connection.commit()
             await cursor.close()
             return [self._row_to_farmer_record(row) for row in rows]
 
@@ -277,6 +280,7 @@ class MySQLPoolStore(AbstractPoolStore):
                 pplns_n_value,
             )
             rows = await cursor.fetchall()
+            await connection.commit()
             await cursor.close()
             res: dict[bytes32, uint64] = {}
             for row in rows:
@@ -295,6 +299,7 @@ class MySQLPoolStore(AbstractPoolStore):
                 "SELECT points, payout_instructions FROM farmer WHERE pps_enabled=1 AND points>=%s", min_points
             )
             rows = await cursor.fetchall()
+            await connection.commit()
             await cursor.close()
             accumulated: Dict[bytes32, uint64] = {}
             for row in rows:
@@ -364,6 +369,7 @@ class MySQLPoolStore(AbstractPoolStore):
                 (launcher_id.hex(), count),
             )
             rows = await cursor.fetchall()
+            await connection.commit()
             await cursor.close()
             ret: List[Tuple[uint64, uint64]] = [
                 (uint64(timestamp), uint64(difficulty)) for timestamp, difficulty in rows
@@ -418,6 +424,7 @@ class MySQLPoolStore(AbstractPoolStore):
                 "SELECT pps_enabled,pps_change_datetime from farmer where launcher_id=%s", (launcher_id.hex())
             )
             row = await cursor.fetchone()
+            await connection.commit()
             await cursor.close()
             result = [row[0] == 1, row[1]]
             return result
