@@ -175,7 +175,7 @@ class PoolServer:
             farmer_record.points,
         )
 
-        self.pool.log.INFO(f"get_farmer response {response.to_json_dict()}, " f"launcher_id: {launcher_id.hex()}")
+        self.pool.log.info(f"get_farmer response {response.to_json_dict()}, " f"launcher_id: {launcher_id.hex()}")
         return sanic_jsonify(response)
 
     @staticmethod
@@ -205,7 +205,7 @@ class PoolServer:
             post_farmer_request, self.post_metadata_from_request(request_obj)
         )
 
-        self.pool.log.INFO(
+        self.pool.log.info(
             f"post_farmer response {post_farmer_response}, "
             f"launcher_id: {post_farmer_request.payload.launcher_id.hex()}",
         )
@@ -228,7 +228,7 @@ class PoolServer:
             put_farmer_request, self.post_metadata_from_request(request_obj)
         )
 
-        self.pool.log.INFO(
+        self.pool.log.info(
             f"put_farmer response {put_farmer_response}, "
             f"launcher_id: {put_farmer_request.payload.launcher_id.hex()}",
         )
@@ -257,7 +257,7 @@ class PoolServer:
 
         post_partial_response = await self.pool.process_partial(partial, farmer_record, uint64(int(start_time)))
 
-        self.pool.log.INFO(
+        self.pool.log.info(
             f"post_partial response {post_partial_response}, time: {time.time() - start_time} "
             f"launcher_id: {request['payload']['launcher_id']}"
         )
@@ -296,7 +296,7 @@ class PoolServer:
                 f"Failed to verify signature {signature} for launcher_id {launcher_id.hex()}.",
             )
 
-        self.pool.log.INFO(f"Login successful for launcher_id: {launcher_id.hex()}")
+        self.pool.log.info(f"Login successful for launcher_id: {launcher_id.hex()}")
 
         return await self.login_response(launcher_id)
 
