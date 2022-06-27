@@ -1,3 +1,4 @@
+Use install.sh to install
 To update from upstream refer to https://gist.github.com/0xjac/85097472043b697ab57ba1b1c7530274
 ## DB EVENTS
 CREATE EVENT update_sec_points ON SCHEDULE EVERY 10 MINUTE DO UPDATE farmer JOIN (SELECT SUM(partial.difficulty) AS totalPoints, partial.launcher_id FROM partial WHERE partial.pps=0 GROUP BY partial.launcher_id) AS pointTotals ON farmer.launcher_id = pointTotals.launcher_id SET farmer.points = pointTotals.totalPoints;
