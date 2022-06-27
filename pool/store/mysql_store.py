@@ -175,7 +175,8 @@ class MySQLPoolStore(AbstractPoolStore):
                 "authentication_public_key,singleton_tip,singleton_tip_state,points,difficulty,payout_instructions,"
                 "is_pool_member) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
                 "ON DUPLICATE KEY UPDATE p2_singleton_puzzle_hash=%s, delay_time=%s, delay_puzzle_hash=%s,"
-                "authentication_public_key=%s, singleton_tip=%s, singleton_tip_state=%s, payout_instructions=%s, is_pool_member=%s",
+                "authentication_public_key=%s, singleton_tip=%s, singleton_tip_state=%s, "
+                "payout_instructions=%s, is_pool_member=%s",
                 (
                     farmer_record.launcher_id.hex(),
                     farmer_record.p2_singleton_puzzle_hash.hex(),
@@ -275,8 +276,8 @@ class MySQLPoolStore(AbstractPoolStore):
             cursor = await connection.cursor()
             await cursor.execute(
                 "SELECT partial.difficulty, farmer.payout_instructions, partial.accept_time, partial.launcher_id "
-                "FROM partial INNER JOIN farmer ON partial.launcher_id=farmer.launcher_id WHERE partial.pps=0 ORDER BY partial.accept_time "
-                f"DESC LIMIT %s",
+                "FROM partial INNER JOIN farmer ON partial.launcher_id=farmer.launcher_id WHERE partial.pps=0 "
+                "ORDER BY partial.accept_time DESC LIMIT %s",
                 pplns_n_value,
             )
             rows = await cursor.fetchall()
@@ -397,8 +398,8 @@ class MySQLPoolStore(AbstractPoolStore):
                     launcher_id = row[0]
                     await cursor.execute(
                         "INSERT INTO payments(payout_time,block_height,transaction_id,launcher_id,payout_instructions,"
-                        f"payout,pps,confirmed) "
-                        f"VALUES(SYSDATE(6),%s,%s,%s,%s,%s,%s,0)",
+                        "payout,pps,confirmed) "
+                        "VALUES(SYSDATE(6),%s,%s,%s,%s,%s,%s,0)",
                         (block_confirmed, transaction_id.hex(), launcher_id, payout_instructions, payout, pps),
                     )
                     await cursor.execute(

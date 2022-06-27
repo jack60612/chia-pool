@@ -32,7 +32,7 @@ class RequestMetadata:
     headers: Mapping[str, str]  # header names are all lower case
     cookies: Dict[str, str]
     query: Dict[str, str]  # query params passed in the url. These are not used by chia clients at the moment, but
-    # allow for a lot of adjustments and thanks to including them now they can be used without introducing breaking changes
+    # allow for a lot of adjustments they can be used without introducing breaking changes
     remote: str  # address of the client making the request
 
     def __post_init__(self):

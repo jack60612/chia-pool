@@ -41,8 +41,8 @@ class PaymentServer:
             level=logging.INFO,
             filename=pool_config["PPLNS_logging"]["log_path"] + pool_config["PPLNS_logging"]["log_filename"],
             encoding="utf-8",
-            format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S',
+            format="%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
             force=True,
         )
         initialize_logging(
@@ -56,7 +56,7 @@ class PaymentServer:
         else:
             from pool.store.sqlite_store import SqlitePoolStore
 
-            self.store: AbstractPoolStore = pool_store or SqlitePoolStore()
+            self.store = pool_store or SqlitePoolStore()
 
         # This is the wallet fingerprint and ID for the wallet spending the funds from `self.default_target_puzzle_hash`
         self.wallet_fingerprint = pool_config["wallet_fingerprint"]

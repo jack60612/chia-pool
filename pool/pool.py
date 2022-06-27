@@ -56,7 +56,7 @@ class Pool:
         constants: ConsensusConstants,
         pool_store: Optional[AbstractPoolStore] = None,
         difficulty_function: Callable = get_new_difficulty,
-        payment_manager: Optional[DefaultPaymentManager] = None,
+        payment_manager: Optional[AbstractPaymentManager] = None,
     ):
         self.follow_singleton_tasks: Dict[bytes32, asyncio.Task] = {}
         # logging config
@@ -66,8 +66,8 @@ class Pool:
             level=logging.INFO,
             filename=pool_config["logging"]["log_path"] + pool_config["logging"]["log_filename"],
             encoding="utf-8",
-            format='%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S',
+            format="%(asctime)s.%(msecs)03d %(levelname)s %(module)s - %(funcName)s: %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
             force=True,
         )
 
@@ -459,7 +459,6 @@ class Pool:
         """
         singleton_task: Optional[Task] = self.follow_singleton_tasks.get(launcher_id, None)
         remove_after = False
-        farmer_rec = None
         if singleton_task is None or singleton_task.done():
             farmer_rec: Optional[FarmerRecord] = await self.store.get_farmer_record(launcher_id)
             singleton_task = asyncio.create_task(

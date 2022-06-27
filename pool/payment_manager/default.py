@@ -1,7 +1,7 @@
 import asyncio
 import traceback
 from math import floor
-from typing import Dict, Optional, Set, List, Tuple
+from typing import Dict, Optional, Set, List
 
 from chia.consensus.block_rewards import calculate_pool_reward
 from chia.types.blockchain_format.coin import Coin
@@ -394,7 +394,8 @@ class DefaultPaymentManager(AbstractPaymentManager):
                             )
                             peak_height = self._state_keeper.blockchain_state["peak"].height
                             self._logger.info(
-                                f"Waiting for transaction to obtain {self.confirmation_security_threshold} confirmations"
+                                f"Waiting for transaction to obtain "
+                                f"{self.confirmation_security_threshold} confirmations"
                             )
                             if not transaction.confirmed:
                                 self._logger.info(f"Not confirmed. In mempool? {transaction.is_in_mempool()}")
