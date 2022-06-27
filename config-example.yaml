@@ -1,12 +1,12 @@
 pool_info:
-  default_res: Minerium pool
-  name: The Minerium Chia Pool
+  default_res: Jack's pool
+  name: The Jack Chia Pool
   logo_url: https://miner/img/pool_logo.svg
   description: "This Pool allows you to pool."
-welcome_message: "Welcome to Minerium "
+welcome_message: "Welcome to Jacks Pool "
 pps_fee: 0.5
 pplns_fee: 0.5
-pool_url: https://chia.minerium.com/
+pool_url: https://chia.jacknelson.xyz/
 min_difficulty: 5
 default_difficulty: 5
 static_difficulty: 5

@@ -37,8 +37,8 @@ from .payment_manager.abstract import AbstractPaymentManager
 from .store.abstract import AbstractPoolStore
 from .util import error_response, RequestMetadata, sanic_jsonify
 
-app = Sanic("Minerium_Pool_Server", configure_logging=True)
-app.config.FORWARDED_SECRET = "34geggfdgdgdgertertgertetet5fgfdg4345431"
+app = Sanic("Chia_Pool_Server", configure_logging=True)
+app.config.FORWARDED_SECRET = "34geggfdgdgdgertertgertetet5fasawa45431"
 
 
 def allow_cors(response: HTTPResponse) -> HTTPResponse:
@@ -118,7 +118,7 @@ class PoolServer:
 
     @staticmethod
     async def index(_) -> HTTPResponse:
-        return text("Minerium Chia Pool")
+        return text("Jack's Chia Pool")
 
     async def get_pool_info(self, _) -> HTTPResponse:
         res: GetPoolInfoResponse = GetPoolInfoResponse(
