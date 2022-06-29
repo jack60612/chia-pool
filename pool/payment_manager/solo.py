@@ -88,8 +88,8 @@ class SoloPaymentManager(AbstractPaymentManager):
             self.check_new_farmers_loop_task = asyncio.create_task(self.check_new_farmers_loop())
         self.collect_pool_rewards_loop_task = asyncio.create_task(self.collect_pool_rewards_loop())
 
-        #self.create_payment_loop_task = asyncio.create_task(self.create_payment_loop())
-        #self.submit_payment_loop_task = asyncio.create_task(self.submit_payment_loop())
+        # self.create_payment_loop_task = asyncio.create_task(self.create_payment_loop())
+        # self.submit_payment_loop_task = asyncio.create_task(self.submit_payment_loop())
 
     async def stop(self):
         if self.check_new_farmers_loop_task is not None:
