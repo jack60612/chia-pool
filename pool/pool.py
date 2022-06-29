@@ -42,6 +42,7 @@ from .blockchain_state import StateKeeper
 from .difficulty_adjustment import get_new_difficulty
 from .payment_manager.abstract import AbstractPaymentManager
 from .payment_manager.default import DefaultPaymentManager
+from .payment_manager.solo import SoloPaymentManager
 from .singleton import get_singleton_state, get_coin_spend
 from .store.abstract import AbstractPoolStore
 from .record import FarmerRecord
@@ -94,7 +95,7 @@ class Pool:
 
         self.pool_fee = pool_config["pplns_fee"]
 
-        self.payment_manager: AbstractPaymentManager = payment_manager or DefaultPaymentManager(
+        self.payment_manager: AbstractPaymentManager = payment_manager or SoloPaymentManager(
             self.log, pool_config, self.constants
         )
 
