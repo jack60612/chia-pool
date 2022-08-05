@@ -33,7 +33,7 @@ Several things are customizable in this pool reference. This includes:
 * How long the timeout is for leaving the pool
 * How difficulty adjustment happens
 * Fees to take, and how much to pay in blockchain fees  
-* How farmers' points are counted when paying (PPS, PPLNS, etc)
+* How farmers' points are counted when payinasasg (PPS, PPLNS, etc)
 * How farmers receive payouts (XCH, BTC, ETH, etc), and how often
 * What store (DB) is used - by default it's an SQLite db. Users can use their own store implementations, based on 
   `AbstractPoolStore`, by supplying them to `pool_server.start_pool_server`
